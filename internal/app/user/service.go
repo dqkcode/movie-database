@@ -15,7 +15,7 @@ type (
 	repository interface {
 		Create(ctx context.Context, user User) (string, error)
 		Update(ctx context.Context, user User) (string, error)
-		FindUserByEmail(ctx context.Context, id string) (*User, error)
+		FindUserByEmail(ctx context.Context, email string) (*User, error)
 		Delete(ctx context.Context, id string) error
 		CheckEmailIsRegisted(ctx context.Context, email string) bool
 	}
@@ -28,7 +28,7 @@ func NewService(repo repository) *Service {
 	return &Service{
 		repository: repo,
 	}
-}
+
 
 func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, error) {
 	if err := validator.New().Struct(req); err != nil {
@@ -70,4 +70,11 @@ func (s *Service) Update(ctx context.Context, req UpdateInfoRequest) (User, erro
 
 func (s *Service) ChangePassword(ctx context.Context, req ChangePasswordRequest) error {
 	return nil
+}
+func (s *Service) FindUserByEmail(ctx context.Context, email string) (*User, error) {
+	user, err := s.repository.FindUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
