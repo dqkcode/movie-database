@@ -2,15 +2,22 @@ package user
 
 import (
 	"context"
+	"fmt"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type (
 	repository interface {
-		// CURD
 		Create(ctx context.Context, user User) (string, error)
 		Update(ctx context.Context, user User) (string, error)
-		Read(ctx context.Context, id string) (User, error)
+		FindUserByEmail(ctx context.Context, id string) (*User, error)
 		Delete(ctx context.Context, id string) error
+		CheckEmailIsRegisted(ctx context.Context, email string) bool
 	}
 	Service struct {
 		repository
@@ -19,16 +26,45 @@ type (
 
 func NewService(repo repository) *Service {
 	return &Service{
-		repo,
+		repository: repo,
 	}
 }
 
 func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, error) {
+	if err := validator.New().Struct(req); err != nil {
+		logrus.Errorf("failed to validation, err: %v", err)
+		return "", err
+	}
 
-	return "", nil
+	if IsRegisted := s.repository.CheckEmailIsRegisted(ctx, req.Email); IsRegisted == true {
+		logrus.Warnf("An email (%v) is exited.", req.Email)
+		return "", fmt.Errorf("An email (%v) is exited", req.Email)
+	}
+
+	pwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		logrus.Errorf("failed to generate password, err: %v", err)
+		return "", fmt.Errorf("Password is invalid format")
+	}
+
+	user := User{
+		ID:        uuid.New().String(),
+		Email:     req.Email,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Gender:    req.Gender,
+		Password:  string(pwd),
+		CreatedAt: time.Now(),
+	}
+	id, err := s.repository.Create(ctx, user)
+	if err != nil {
+		logrus.Errorf("failed to create user, err: %v", err)
+		return "", err
+	}
+	return id, nil
 }
 
-func (s *Service) RUpdate(ctx context.Context, req UpdateInfoRequest) (User, error) {
+func (s *Service) Update(ctx context.Context, req UpdateInfoRequest) (User, error) {
 	return User{}, nil
 }
 

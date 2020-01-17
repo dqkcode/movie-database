@@ -7,3 +7,8 @@ type (
 		Error string
 	}
 )
+
+const (
+	CodeSuccess = "0000"
+	CodeFail    = "1000"
+)

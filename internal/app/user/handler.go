@@ -11,8 +11,8 @@ import (
 type (
 	service interface {
 		Register(ctx context.Context, req RegisterRequest) (string, error)
-		Update(ctx context.Context, req UpdateInfoRequest) (User, error)
-		ChangePassword(ctx context.Context, req ChangePasswordRequest) error
+		// Update(ctx context.Context, req UpdateInfoRequest) (User, error)
+		// ChangePassword(ctx context.Context, req ChangePasswordRequest) error
 	}
 	Handler struct {
 		srv service
@@ -34,11 +34,18 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.srv.Register(r.Context(), req)
 	if err != nil {
+		json.NewEncoder(w).Encode(types.Response{
+			Code:  types.CodeFail,
+			Data:  "",
+			Error: err.Error(),
+		})
 		return
 	}
 	json.NewEncoder(w).Encode(types.Response{
-		Code:  string(http.StatusCreated),
-		Data:  id,
+		Code: types.CodeSuccess,
+		Data: map[string]interface{}{
+			"id": id,
+		},
 		Error: "",
 	})
 }
