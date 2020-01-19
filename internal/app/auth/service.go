@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/dqkcode/movie-database/internal/app/user"
+	"github.com/dqkcode/movie-database/internal/app/api"
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/sirupsen/logrus"
 )
@@ -27,13 +28,19 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
 		return "", err
 	}
 
-	user, err := user.Service.
+	userSrv := api.NewUserServive()
+	user, err := userSrv.FindUserByEmail(ctx, req.Email)
 	if err != nil {
 		return "", err
 	}
-	expirationTime := time.Now().Add(5 * time.Minute)
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		logrus.Errorf("password wrong")
+		return "", err
+	}
+	expirationTime := time.Now().Add(500 * time.Minute)
 	claims := &Claims{
 		Email: req.Email,
+		Id:    user.ID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},
@@ -41,7 +48,7 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Create the JWT string
-	tokenString, err := token.SignedString("jwtKey")
+	tokenString, err := token.SignedString([]byte("my_secret_key"))
 	if err != nil {
 		logrus.Errorf("Signing string fail")
 		return "", err

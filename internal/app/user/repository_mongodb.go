@@ -31,8 +31,23 @@ func (m *MongoDBRepository) Create(ctx context.Context, user User) (string, erro
 	return user.ID, nil
 }
 
-func (m *MongoDBRepository) Update(ctx context.Context, user User) (string, error) {
-	return "", nil
+func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
+	s := m.session.Clone()
+	defer s.Close()
+	u := ctx.Value("user").(*User)
+	c := m.getCollection(s)
+	err := c.UpdateId(u.ID, bson.M{
+		"$set": bson.M{
+			"first_name": user.FirstName,
+			"last_name":  user.LastName,
+			"gender":     user.Gender,
+			"updated_at": time.Now(),
+		}})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *MongoDBRepository) FindUserByEmail(ctx context.Context, email string) (*User, error) {

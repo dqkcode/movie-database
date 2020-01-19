@@ -11,6 +11,8 @@ type (
 	}
 	Claims struct {
 		Email string `validate:"required,email" json:"email"`
+		Id    string
+		Role  string
 		jwt.StandardClaims
 	}
 )

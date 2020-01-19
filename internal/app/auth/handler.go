@@ -10,14 +10,14 @@ import (
 
 type (
 	service interface {
-		Auth(ctx context.Context, email string, password string) (string, error)
+		Login(ctx context.Context, req LoginRequest) (string, error)
 	}
 	Handler struct {
 		srv service
 	}
 )
 
-func NewHanler(srv service) *Handler {
+func NewHandler(srv service) *Handler {
 	return &Handler{
 		srv,
 	}
@@ -30,7 +30,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	token, err := h.srv.Auth(r.Context(), req.Email, req.Password)
+	token, err := h.srv.Login(r.Context(), req)
 	if err != nil {
 		json.NewEncoder(w).Encode(types.Response{
 			Code:  types.CodeFail,
