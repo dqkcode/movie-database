@@ -22,6 +22,8 @@ type (
 	UserResponse struct {
 		Created        ResponseInfo `yaml:"created"`
 		DuplicateEmail ResponseInfo `yaml:"duplicate_email"`
+		UpdateFailed   ResponseInfo `yaml:"update_failed"`
+		CreateFailed   ResponseInfo `yaml:"create_failed"`
 	}
 	AuthResponse struct {
 		UserLocked    ResponseInfo `yaml:"user_locked"`
@@ -44,19 +46,6 @@ type (
 	}
 )
 
-const (
-	CodeSuccess = "0000"
-	CodeFail    = "1000"
-)
-
-// func ResponseJson(w http.ResponseWriter, code string, data interface{}, err string) {
-// 	json.NewEncoder(w).Encode(Response{
-// 		Code:  code,
-// 		Data:  data,
-// 		Error: err,
-// 	})
-// }
-
 func ResponseJson(w http.ResponseWriter, data interface{}, resinfo ResponseInfo) {
 
 	res := &Response{}
@@ -64,13 +53,14 @@ func ResponseJson(w http.ResponseWriter, data interface{}, resinfo ResponseInfo)
 	res.Message = resinfo.Message
 	res.Data = data
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resinfo.Status)
+
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(resinfo.Status)
 }
 
 func Load() *AllResponse {

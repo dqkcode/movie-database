@@ -41,8 +41,6 @@ func main() {
 
 	router.Handle("/update", auth.UserInfoMiddleware(http.HandlerFunc(UserHandler.Update))).Methods(http.MethodPost)
 
-	// router.Path("/update").Methods(http.MethodPost).HandlerFunc(UserHandler.Update)
-
 	router.HandleFunc("/", greet)
 	server.ListenAndServe(ServerConf, router)
 

@@ -31,24 +31,22 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 	id, err := h.srv.Register(r.Context(), req)
-	if err != nil {
-		// json.NewEncoder(w).Encode(types.Response{
-		// 	Code:  types.CodeFail,
-		// 	Data:  "",
-		// 	Error: err.Error(),
-		// })
+
+	if err == ErrDBQuery {
+		types.ResponseJson(w, "", types.Normal().Internal)
+		return
+	} else if err == ErrUserAlreadyExist {
+		types.ResponseJson(w, "", types.User().DuplicateEmail)
+		return
+	} else if err == ErrCreateUserFailed {
+		types.ResponseJson(w, "", types.User().CreateFailed)
 		return
 	}
-	// json.NewEncoder(w).Encode(types.Response{
-	// 	Code: types.CodeSuccess,
-	// 	Data: map[string]interface{}{
-	// 		"id": id,
-	// 	},
-	// 	Error: "",
-	// })
-	types.ResponseJson(w, id, types.User().Created)
+	data := map[string]string{
+		"id": id,
+	}
+	types.ResponseJson(w, data, types.User().Created)
 }
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	var req UpdateInfoRequest
@@ -59,20 +57,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err := h.srv.Update(r.Context(), req)
 	if err != nil {
-		// json.NewEncoder(w).Encode(types.Response{
-		// 	Code:  types.CodeFail,
-		// 	Data:  "",
-		// 	Error: err.Error(),
-		// })
+		types.ResponseJson(w, "", types.User().UpdateFailed)
 		return
 	}
-	// json.NewEncoder(w).Encode(types.Response{
-	// 	Code:  types.CodeSuccess,
-	// 	Data:  r.Context().Value("user").(*User).ID,
-	// 	Error: "",
-	// })
 
-	data := r.Context().Value("user").(*User).ID
+	data := map[string]string{
+		"id": r.Context().Value("user").(*User).ID,
+	}
 
-	types.ResponseJson(w, data, types.User().Created)
+	types.ResponseJson(w, data, types.Normal().Success)
 }

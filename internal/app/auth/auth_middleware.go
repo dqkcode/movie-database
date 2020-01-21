@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"net/http"
-	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dqkcode/movie-database/internal/app/types"
@@ -54,15 +53,16 @@ func UserInfoMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
-			// json.NewEncoder(w).Encode(types.Response{
-			// 	Code:  types.CodeFail,
-			// 	Error: "Unauthorized",
-			// })
 			types.ResponseJson(w, "", types.Auth().Unauthorized)
 			return
 		}
-		// if tokenString
-		tokenValidType := strings.Replace(tokenString, "Bearer ", "", 7)
+		var tokenValidType string
+		if tokenString[:7] == "Bearer " {
+			tokenValidType = tokenString[7:]
+		} else {
+			tokenValidType = tokenString
+		}
+
 		claims := &Claims{}
 		token, err := jwt.ParseWithClaims(tokenValidType, claims, func(token *jwt.Token) (interface{}, error) {
 			return []byte("my_secret_key"), nil

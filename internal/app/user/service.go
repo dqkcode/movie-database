@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -17,7 +16,7 @@ type (
 		Update(ctx context.Context, user User) error
 		FindUserByEmail(ctx context.Context, email string) (*User, error)
 		Delete(ctx context.Context, id string) error
-		CheckEmailIsRegisted(ctx context.Context, email string) bool
+		CheckEmailIsRegisted(ctx context.Context, email string) error
 	}
 	Service struct {
 		repository
@@ -36,15 +35,17 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 		return "", err
 	}
 
-	if IsRegisted := s.repository.CheckEmailIsRegisted(ctx, req.Email); IsRegisted == true {
-		logrus.Warnf("An email (%v) is exited.", req.Email)
-		return "", fmt.Errorf("An email (%v) is exited", req.Email)
+	err := s.repository.CheckEmailIsRegisted(ctx, req.Email)
+	if err == ErrDBQuery {
+		return "", err
+	} else if err == ErrUserAlreadyExist {
+		return "", err
 	}
 
 	pwd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		logrus.Errorf("failed to generate password, err: %v", err)
-		return "", fmt.Errorf("Password is invalid format")
+		return "", ErrGenPasswordFailed
 	}
 
 	user := User{
@@ -59,7 +60,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 	id, err := s.repository.Create(ctx, user)
 	if err != nil {
 		logrus.Errorf("failed to create user, err: %v", err)
-		return "", err
+		return "", ErrCreateUserFailed
 	}
 	return id, nil
 }
@@ -72,9 +73,9 @@ func (s *Service) Update(ctx context.Context, req UpdateInfoRequest) error {
 	}
 
 	err := s.repository.Update(ctx, userUp)
-	if err != nil {
+	if err != nil && err == ErrUpdateUserFailed {
 		logrus.Errorf("failed to update user, err: %v", err)
-		return err
+		return ErrUpdateUserFailed
 	}
 	return nil
 }
@@ -87,5 +88,6 @@ func (s *Service) FindUserByEmail(ctx context.Context, email string) (*User, err
 	if err != nil {
 		return nil, err
 	}
+
 	return user, nil
 }

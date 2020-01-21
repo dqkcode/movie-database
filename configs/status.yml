@@ -23,27 +23,35 @@ normal:
 user:
   created:
     status: 201
-    code:   1005
+    code:   1105
     message: "Register successfully"
   duplicate_email:
     status: 400
-    code: 1006
+    code: 1106
     message: "An email is existed"
+  update_failed:
+    status: 500
+    code: 1107
+    message: "User update failed"
+  create_failed:
+    status: 500
+    code: 1107
+    message: "Register user failed"
   
 auth:
   user_locked:
     status: 423
-    code: 1007
+    code: 1201
     message: "Account is locked"
   email_not_exist:
     status: 401
-    code: 1008
+    code: 1202
     message: "An email is not exist"
   password_wrong:
     status: 401
-    code: 1009
+    code: 1203
     message: "Password wrong"
   unauthorized:
     status: 401
-    code: 1010
+    code: 1214
     message: "Unauthorized"

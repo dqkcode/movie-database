@@ -44,7 +44,7 @@ func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
 			"updated_at": time.Now(),
 		}})
 	if err != nil {
-		return err
+		return ErrUpdateUserFailed
 	}
 
 	return nil
@@ -67,18 +67,22 @@ func (m *MongoDBRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (m *MongoDBRepository) CheckEmailIsRegisted(ctx context.Context, email string) bool {
+func (m *MongoDBRepository) CheckEmailIsRegisted(ctx context.Context, email string) error {
 	s := m.session.Clone()
 	defer s.Close()
 	selector := bson.M{
 		"email": email,
 	}
 
-	if err := m.getCollection(s).Find(selector).One(&User{}); err != nil {
-		return false
-	}
+	err := m.getCollection(s).Find(selector).One(&User{})
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return ErrUserNotFound
 
-	return true
+		}
+		return ErrDBQuery
+	}
+	return ErrUserAlreadyExist
 }
 func (m *MongoDBRepository) getCollection(session *mgo.Session) *mgo.Collection {
 	return session.DB("").C("users")
