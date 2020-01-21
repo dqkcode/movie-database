@@ -53,14 +53,14 @@ var (
 	root Logger
 )
 
-func Root() Logger {
-	if root == nil {
-		root = newGlog()
-	}
-	return root
-}
+// func Root() Logger {
+// 	if root == nil {
+// 		root = newGlog()
+// 	}
+// 	return root
+// }
 
 // WithFields return a new logger entry with fields
-func WithFields(fields Fields) Logger {
-	return Root().WithFields(fields)
-}
+// func WithFields(fields Fields) Logger {
+// 	return Root().WithFields(fields)
+// }

@@ -34,20 +34,21 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 
 	id, err := h.srv.Register(r.Context(), req)
 	if err != nil {
-		json.NewEncoder(w).Encode(types.Response{
-			Code:  types.CodeFail,
-			Data:  "",
-			Error: err.Error(),
-		})
+		// json.NewEncoder(w).Encode(types.Response{
+		// 	Code:  types.CodeFail,
+		// 	Data:  "",
+		// 	Error: err.Error(),
+		// })
 		return
 	}
-	json.NewEncoder(w).Encode(types.Response{
-		Code: types.CodeSuccess,
-		Data: map[string]interface{}{
-			"id": id,
-		},
-		Error: "",
-	})
+	// json.NewEncoder(w).Encode(types.Response{
+	// 	Code: types.CodeSuccess,
+	// 	Data: map[string]interface{}{
+	// 		"id": id,
+	// 	},
+	// 	Error: "",
+	// })
+	types.ResponseJson(w, id, types.User().Created)
 }
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	var req UpdateInfoRequest
@@ -58,16 +59,20 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err := h.srv.Update(r.Context(), req)
 	if err != nil {
-		json.NewEncoder(w).Encode(types.Response{
-			Code:  types.CodeFail,
-			Data:  "",
-			Error: err.Error(),
-		})
+		// json.NewEncoder(w).Encode(types.Response{
+		// 	Code:  types.CodeFail,
+		// 	Data:  "",
+		// 	Error: err.Error(),
+		// })
 		return
 	}
-	json.NewEncoder(w).Encode(types.Response{
-		Code:  types.CodeSuccess,
-		Data:  r.Context().Value("user").(*User).ID,
-		Error: "",
-	})
+	// json.NewEncoder(w).Encode(types.Response{
+	// 	Code:  types.CodeSuccess,
+	// 	Data:  r.Context().Value("user").(*User).ID,
+	// 	Error: "",
+	// })
+
+	data := r.Context().Value("user").(*User).ID
+
+	types.ResponseJson(w, data, types.User().Created)
 }

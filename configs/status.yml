@@ -1,0 +1,49 @@
+normal:
+  success:
+    status: 200
+    code: 1001
+    message: "Success"
+  not_found:
+    status: 404
+    code: 1002
+    message: "Not found"
+  timeout:
+    status: 500
+    code: 1002
+    message: "Timeout"
+  bad_request:
+    status: 400
+    code: 1003
+    message: "Bad request"
+  internal:
+    status: 500
+    code: 1004
+    message: "Internal server error"
+
+user:
+  created:
+    status: 201
+    code:   1005
+    message: "Register successfully"
+  duplicate_email:
+    status: 400
+    code: 1006
+    message: "An email is existed"
+  
+auth:
+  user_locked:
+    status: 423
+    code: 1007
+    message: "Account is locked"
+  email_not_exist:
+    status: 401
+    code: 1008
+    message: "An email is not exist"
+  password_wrong:
+    status: 401
+    code: 1009
+    message: "Password wrong"
+  unauthorized:
+    status: 401
+    code: 1010
+    message: "Unauthorized"

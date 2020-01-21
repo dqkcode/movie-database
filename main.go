@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/dqkcode/movie-database/internal/app/auth"
 	"net/http"
+
+	"github.com/dqkcode/movie-database/internal/app/auth"
+	"github.com/sirupsen/logrus"
 
 	"github.com/dqkcode/movie-database/internal/pkg/db/mongodb"
 
@@ -18,6 +20,8 @@ func main() {
 	ServerConf := server.LoadConfigFromEnv()
 	MongoDBConf := mongodb.LoadConfigFromEnv()
 
+	logrus.Infof("MongoDb env: %v", MongoDBConf)
+	// fmt.Printf("MongoDb env: %v", MongoDBConf)
 	session, err := mongodb.Dial(MongoDBConf)
 	if err != nil {
 		panic(err)
@@ -35,8 +39,9 @@ func main() {
 	router.Path("/register").Methods(http.MethodPost).HandlerFunc(UserHandler.Register)
 	router.Path("/login").Methods(http.MethodPost).HandlerFunc(AuthHandler.Login)
 
-	router.Use(auth.GetUserInfoMiddleware())
-	router.Path("/update").Methods(http.MethodPost).HandlerFunc(UserHandler.Update)
+	router.Handle("/update", auth.UserInfoMiddleware(http.HandlerFunc(UserHandler.Update))).Methods(http.MethodPost)
+
+	// router.Path("/update").Methods(http.MethodPost).HandlerFunc(UserHandler.Update)
 
 	router.HandleFunc("/", greet)
 	server.ListenAndServe(ServerConf, router)
