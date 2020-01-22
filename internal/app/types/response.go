@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -64,8 +65,12 @@ func ResponseJson(w http.ResponseWriter, data interface{}, resinfo ResponseInfo)
 }
 
 func Load() *AllResponse {
-	// f, err := os.Open("configs/status.yml")
-	yamlFile, err := ioutil.ReadFile("configs/status.yml")
+
+	path := os.Getenv("STATUS_FILE_PATH")
+	if path == "" {
+		path = "configs/status.yml"
+	}
+	yamlFile, err := ioutil.ReadFile(path)
 
 	if err != nil {
 		panic(err)
@@ -75,9 +80,6 @@ func Load() *AllResponse {
 	if err := yaml.Unmarshal(yamlFile, all); err != nil {
 		panic(err)
 	}
-	// if err := yaml.NewDecoder(f).Decode(all); err != nil {
-	// 	panic(err)
-	// }
 	return all
 }
 

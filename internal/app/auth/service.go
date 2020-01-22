@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/dqkcode/movie-database/internal/app/types"
+
 	"github.com/dgrijalva/jwt-go"
-	"github.com/dqkcode/movie-database/internal/app/api"
 	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 
@@ -14,11 +15,17 @@ import (
 
 type (
 	Service struct {
+		usrSrv UserService
+	}
+	UserService interface {
+		FindUserByEmail(ctx context.Context, email string) (*types.UserInfo, error)
 	}
 )
 
-func NewService() *Service {
-	return &Service{}
+func NewService(userSvc UserService) *Service {
+	return &Service{
+		usrSrv: userSvc,
+	}
 }
 
 func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
@@ -28,13 +35,12 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
 		return "", err
 	}
 
-	userSrv := api.NewUserServive()
-	user, err := userSrv.FindUserByEmail(ctx, req.Email)
+	user, err := s.usrSrv.FindUserByEmail(ctx, req.Email)
 	if err != nil {
 		return "", err
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		logrus.Errorf("password wrong")
+		logrus.Errorf("Compare hash and password failed")
 		return "", err
 	}
 	expirationTime := time.Now().Add(500 * time.Minute)

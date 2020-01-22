@@ -1,11 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
+	"github.com/dqkcode/movie-database/internal/app/api"
+
+	rt "github.com/dqkcode/movie-database/internal/pkg/http/router"
+
 	"github.com/dqkcode/movie-database/internal/app/auth"
-	"github.com/sirupsen/logrus"
 
 	"github.com/dqkcode/movie-database/internal/pkg/db/mongodb"
 
@@ -18,34 +20,31 @@ import (
 
 func main() {
 	ServerConf := server.LoadConfigFromEnv()
-	MongoDBConf := mongodb.LoadConfigFromEnv()
-
-	logrus.Infof("MongoDb env: %v", MongoDBConf)
-	// fmt.Printf("MongoDb env: %v", MongoDBConf)
-	session, err := mongodb.Dial(MongoDBConf)
-	if err != nil {
-		panic(err)
-	}
 	router := mux.NewRouter()
+
+	session := mongodb.InitDBSession()
 
 	repo := user.NewMongoDBRepository(session)
 
 	UserSrv := user.NewService(repo)
 	UserHandler := user.NewHandler(UserSrv)
 
-	AuthSrv := auth.NewService()
+	AuthSrv := api.NewAuthService(UserSrv)
 	AuthHandler := auth.NewHandler(AuthSrv)
 
-	router.Path("/register").Methods(http.MethodPost).HandlerFunc(UserHandler.Register)
-	router.Path("/login").Methods(http.MethodPost).HandlerFunc(AuthHandler.Login)
+	routes := make([]rt.Route, 0)
 
-	router.Handle("/update", auth.UserInfoMiddleware(http.HandlerFunc(UserHandler.Update))).Methods(http.MethodPost)
+	routes = append(routes, UserHandler.Routes()...)
+	routes = append(routes, AuthHandler.Routes()...)
 
-	router.HandleFunc("/", greet)
+	for _, r := range routes {
+		h := http.Handler(r.Handler)
+		for i := len(r.Middlewares) - 1; i >= 0; i-- {
+			h = r.Middlewares[i](h)
+		}
+		router.Path(r.Path).Methods(r.Method).Handler(h).Queries(r.Queries...)
+
+	}
 	server.ListenAndServe(ServerConf, router)
 
-}
-
-func greet(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
 }

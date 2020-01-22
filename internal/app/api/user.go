@@ -1,20 +1,14 @@
 package api
 
 import (
+	"github.com/dqkcode/movie-database/internal/app/auth"
 	"github.com/dqkcode/movie-database/internal/app/user"
-	"github.com/dqkcode/movie-database/internal/pkg/db/mongodb"
 )
 
-func NewUserServive() *user.Service {
+func NewAuthService(usvc *user.Service) *auth.Service {
+	return auth.NewService(usvc)
+}
+func NewUserService(repo *user.MongoDBRepository) *user.Service {
 
-	conf := mongodb.LoadConfigFromEnv()
-	session, err := mongodb.Dial(conf)
-	if err != nil {
-		panic(err)
-	}
-
-	repo := user.NewMongoDBRepository(session)
-	srv := user.NewService(repo)
-
-	return srv
+	return user.NewService(repo)
 }

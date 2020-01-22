@@ -62,7 +62,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]string{
-		"id": r.Context().Value("user").(*User).ID,
+		"id": r.Context().Value("user").(*types.UserInfo).ID,
 	}
 
 	types.ResponseJson(w, data, types.Normal().Success)

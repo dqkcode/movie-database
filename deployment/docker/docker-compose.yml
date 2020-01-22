@@ -17,3 +17,4 @@ services:
     restart: always
     environment: 
       - MONGODB_ADDRS=mongodb:27017
+      - STATUS_FILE_PATH=/home/configs/status.yml

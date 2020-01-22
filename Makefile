@@ -26,6 +26,7 @@ test:
 
 local: build
 	./$(PROJECT_NAME)-$(BUILD_VERSION).bin
-
-dcu: build
+img:
+	docker build -t movies -f deployment/docker/Dockerfile .
+dcu: build img
 	cd deployment/docker && docker-compose up

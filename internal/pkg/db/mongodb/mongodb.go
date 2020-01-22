@@ -41,3 +41,13 @@ func Dial(config *Config) (*mgo.Session, error) {
 
 	return session, nil
 }
+func InitDBSession() *mgo.Session {
+
+	MongoDBConf := LoadConfigFromEnv()
+	session, err := Dial(MongoDBConf)
+	if err != nil {
+		logrus.Errorf("Can not dial to MongoDB addrs: %v", MongoDBConf.Addrs)
+		panic(err)
+	}
+	return session
+}

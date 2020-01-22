@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/dqkcode/movie-database/internal/app/types"
+
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
 )
@@ -34,7 +36,8 @@ func (m *MongoDBRepository) Create(ctx context.Context, user User) (string, erro
 func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
 	s := m.session.Clone()
 	defer s.Close()
-	u := ctx.Value("user").(*User)
+	u := ctx.Value("user").(*types.UserInfo)
+
 	c := m.getCollection(s)
 	err := c.UpdateId(u.ID, bson.M{
 		"$set": bson.M{
@@ -57,7 +60,7 @@ func (m *MongoDBRepository) FindUserByEmail(ctx context.Context, email string) (
 		"email": email,
 	}
 	user := &User{}
-	if err := m.getCollection(s).Find(selector).One(&user); err != nil {
+	if err := m.getCollection(s).Find(selector).One(user); err != nil {
 		return nil, err
 	}
 	return user, nil

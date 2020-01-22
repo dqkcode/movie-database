@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/dqkcode/movie-database/internal/app/types"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -56,6 +58,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 		Gender:    req.Gender,
 		Password:  string(pwd),
 		CreatedAt: time.Now(),
+		Role:      "normal",
 	}
 	id, err := s.repository.Create(ctx, user)
 	if err != nil {
@@ -83,11 +86,11 @@ func (s *Service) Update(ctx context.Context, req UpdateInfoRequest) error {
 func (s *Service) ChangePassword(ctx context.Context, req ChangePasswordRequest) error {
 	return nil
 }
-func (s *Service) FindUserByEmail(ctx context.Context, email string) (*User, error) {
+func (s *Service) FindUserByEmail(ctx context.Context, email string) (*types.UserInfo, error) {
 	user, err := s.repository.FindUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return user.ConvertUserToUserInfo(), nil
 }
