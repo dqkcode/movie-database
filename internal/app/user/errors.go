@@ -11,5 +11,6 @@ var (
 	ErrUserAlreadyExist  = errors.New("User already exist")
 	ErrGenPasswordFailed = errors.New("Generate password failed")
 	ErrCreateUserFailed  = errors.New("Create user failed")
+	ErrPermissionDeny    = errors.New("Permission deny")
 	Err                  = errors.New("")
 )

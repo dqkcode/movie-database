@@ -65,8 +65,27 @@ func (m *MongoDBRepository) FindUserByEmail(ctx context.Context, email string) (
 	}
 	return user, nil
 }
+func (m *MongoDBRepository) FindUserById(ctx context.Context, id string) (*User, error) {
+	s := m.session.Clone()
+	defer s.Close()
+
+	user := &User{}
+	err := m.getCollection(s).FindId(id).One(user)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return user, nil
+}
 
 func (m *MongoDBRepository) Delete(ctx context.Context, id string) error {
+	s := m.session.Clone()
+	defer s.Close()
+	if err := m.getCollection(s).RemoveId(id); err != nil {
+		return err
+	}
 	return nil
 }
 

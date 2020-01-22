@@ -17,6 +17,7 @@ type (
 		Create(ctx context.Context, user User) (string, error)
 		Update(ctx context.Context, user User) error
 		FindUserByEmail(ctx context.Context, email string) (*User, error)
+		FindUserById(ctx context.Context, id string) (*User, error)
 		Delete(ctx context.Context, id string) error
 		CheckEmailIsRegisted(ctx context.Context, email string) error
 	}
@@ -91,6 +92,31 @@ func (s *Service) FindUserByEmail(ctx context.Context, email string) (*types.Use
 	if err != nil {
 		return nil, err
 	}
-
 	return user.ConvertUserToUserInfo(), nil
+}
+
+func (s *Service) FindUserById(ctx context.Context, id string) (*User, error) {
+	u := ctx.Value("user").(*types.UserInfo)
+	if u.Role != "admin" {
+		return nil, ErrPermissionDeny
+	}
+	user, err := s.repository.FindUserById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func (s *Service) DeleteUser(ctx context.Context, id string) error {
+
+	u := ctx.Value("user").(*types.UserInfo)
+	if u.Role != "admin" {
+		return ErrPermissionDeny
+	}
+	err := s.repository.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -1,14 +1,17 @@
 package api
 
 import (
-	"github.com/dqkcode/movie-database/internal/app/auth"
 	"github.com/dqkcode/movie-database/internal/app/user"
+	"github.com/globalsign/mgo"
 )
 
-func NewAuthService(usvc *user.Service) *auth.Service {
-	return auth.NewService(usvc)
-}
 func NewUserService(repo *user.MongoDBRepository) *user.Service {
 
 	return user.NewService(repo)
+}
+
+func NewUserHandler(session *mgo.Session) *user.Handler {
+	repo := user.NewMongoDBRepository(session)
+	usersService := user.NewService(repo)
+	return user.NewHandler(usersService)
 }

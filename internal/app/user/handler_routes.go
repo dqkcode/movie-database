@@ -19,7 +19,19 @@ func (h *Handler) Routes() []router.Route {
 		{
 			Handler:     h.Update,
 			Method:      http.MethodPut,
-			Path:        "/api/v1/update",
+			Path:        "/api/v1/users",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
+			Handler:     h.DeleteUser,
+			Method:      http.MethodDelete,
+			Path:        "/api/v1/users/{id}",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
+			Handler:     h.FindUserById,
+			Method:      http.MethodGet,
+			Path:        "/api/v1/users/{id}",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 	}

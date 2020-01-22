@@ -25,6 +25,8 @@ type (
 		DuplicateEmail ResponseInfo `yaml:"duplicate_email"`
 		UpdateFailed   ResponseInfo `yaml:"update_failed"`
 		CreateFailed   ResponseInfo `yaml:"create_failed"`
+		DeleteFailed   ResponseInfo `yaml:"delete_failed"`
+		UserNotFound   ResponseInfo `yaml:"user_not_found"`
 	}
 	AuthResponse struct {
 		UserLocked    ResponseInfo `yaml:"user_locked"`

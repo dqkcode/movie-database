@@ -37,6 +37,14 @@ user:
     status: 500
     code: 1107
     message: "Register user failed"
+  delete_failed:
+    status: 500
+    code: 1108
+    message: "Delete user failed"
+  user_not_found:
+    status: 400
+    code: 1109
+    message: "User not found"
   
 auth:
   user_locked:
