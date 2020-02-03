@@ -7,8 +7,9 @@ import (
 )
 
 func main() {
-	ServerConf := server.LoadConfigFromEnv()
+
+	serverConf := server.LoadConfigFromEnv()
 	router := api.InitRouter()
-	server.ListenAndServe(ServerConf, router)
+	server.ListenAndServe(serverConf, router)
 
 }

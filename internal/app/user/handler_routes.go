@@ -8,30 +8,38 @@ import (
 	"github.com/dqkcode/movie-database/internal/pkg/http/router"
 )
 
+const version1 = "/api/v1"
+
 func (h *Handler) Routes() []router.Route {
 
 	return []router.Route{
 		{
 			Handler: h.Register,
 			Method:  http.MethodPost,
-			Path:    "/api/v1/register",
+			Path:    version1 + "/register",
 		},
 		{
 			Handler:     h.Update,
 			Method:      http.MethodPut,
-			Path:        "/api/v1/users",
+			Path:        version1 + "/users",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{
 			Handler:     h.DeleteUser,
 			Method:      http.MethodDelete,
-			Path:        "/api/v1/users/{id}",
+			Path:        version1 + "/users/{id}",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{
 			Handler:     h.FindUserById,
 			Method:      http.MethodGet,
-			Path:        "/api/v1/users/{id}",
+			Path:        version1 + "/users/{id}",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
+			Handler:     h.GetAllUsers,
+			Method:      http.MethodGet,
+			Path:        version1 + "/users",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 	}

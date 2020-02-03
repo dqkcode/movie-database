@@ -79,6 +79,20 @@ func (m *MongoDBRepository) FindUserById(ctx context.Context, id string) (*User,
 	}
 	return user, nil
 }
+func (m *MongoDBRepository) GetAllUsers(ctx context.Context) ([]*User, error) {
+	s := m.session.Clone()
+	defer s.Close()
+
+	users := []*User{}
+	err := m.getCollection(s).Find(nil).All(&users)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return users, nil
+}
 
 func (m *MongoDBRepository) Delete(ctx context.Context, id string) error {
 	s := m.session.Clone()

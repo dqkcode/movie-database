@@ -47,6 +47,7 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (string, error) {
 	claims := &Claims{
 		Email: req.Email,
 		Id:    user.ID,
+		Role:  user.Role,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expirationTime.Unix(),
 		},

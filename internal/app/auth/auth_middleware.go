@@ -30,6 +30,7 @@ func AuthMiddleware(h http.Handler) http.Handler {
 		})
 		if err != nil {
 			logrus.Errorf("Can not compare token, error: %v", err)
+			types.ResponseJson(w, "", types.Auth().TokenInvalid)
 			return
 
 		}
@@ -41,6 +42,7 @@ func AuthMiddleware(h http.Handler) http.Handler {
 		NewUser := &types.UserInfo{
 			ID:    claims.Id,
 			Email: claims.Email,
+			Role:  claims.Role,
 			//TODO add some info
 		}
 		newCtx := context.WithValue(r.Context(), "user", NewUser)

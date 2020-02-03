@@ -20,6 +20,7 @@ type (
 		FindUserById(ctx context.Context, id string) (*User, error)
 		Delete(ctx context.Context, id string) error
 		CheckEmailIsRegisted(ctx context.Context, email string) error
+		GetAllUsers(ctx context.Context) ([]*User, error)
 	}
 	Service struct {
 		repository
@@ -119,4 +120,20 @@ func (s *Service) DeleteUser(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+func (s *Service) GetAllUsers(ctx context.Context) ([]*types.UserInfo, error) {
+
+	u := ctx.Value("user").(*types.UserInfo)
+	if u.Role != "admin" {
+		return nil, ErrPermissionDeny
+	}
+	users, err := s.repository.GetAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var us []*types.UserInfo
+	for _, u := range users {
+		us = append(us, u.ConvertUserToUserInfo())
+	}
+	return us, nil
 }

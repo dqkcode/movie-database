@@ -19,6 +19,10 @@ normal:
     status: 500
     code: 1004
     message: "Internal server error"
+  permission_deny:
+    status: 400
+    code: 1005
+    message: "Permission deny"
 
 user:
   created:
@@ -61,5 +65,18 @@ auth:
     message: "Password wrong"
   unauthorized:
     status: 401
-    code: 1214
+    code: 1204
     message: "Unauthorized"
+  token_invalid:
+    status: 401
+    code: 1205
+    message: "Token Invalid"
+movie:
+  created:
+    status: 423
+    code: 1301
+    message: "Created"
+  delete_failed:
+    status: 500
+    code: 1302
+    message: "Delete movie failed"

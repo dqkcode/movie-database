@@ -33,19 +33,26 @@ type (
 		EmailNotExist ResponseInfo `yaml:"email_not_exist"`
 		PasswordWrong ResponseInfo `yaml:"password_wrong"`
 		Unauthorized  ResponseInfo `yaml:"unauthorized"`
+		TokenInvalid  ResponseInfo `yaml:"token_invalid"`
+	}
+	MovieResponse struct {
+		Created      ResponseInfo `yaml:"created"`
+		DeleteFailed ResponseInfo `yaml:"delete_failed"`
 	}
 	NormalResponse struct {
-		Success    ResponseInfo `yaml:"success"`
-		NotFound   ResponseInfo `yaml:"not_found"`
-		TimeOut    ResponseInfo `yaml:"timeout"`
-		BadRequest ResponseInfo `yaml:"bad_request"`
-		Internal   ResponseInfo `yaml:"internal"`
+		Success        ResponseInfo `yaml:"success"`
+		NotFound       ResponseInfo `yaml:"not_found"`
+		TimeOut        ResponseInfo `yaml:"timeout"`
+		BadRequest     ResponseInfo `yaml:"bad_request"`
+		Internal       ResponseInfo `yaml:"internal"`
+		PermissionDeny ResponseInfo `yaml:"permission_deny"`
 	}
 
 	AllResponse struct {
 		NormalResponse NormalResponse `yaml:"normal"`
 		UserResponse   UserResponse   `yaml:"user"`
 		AuthResponse   AuthResponse   `yaml:"auth"`
+		MovieResponse  MovieResponse  `yaml:"movie"`
 	}
 )
 
@@ -61,9 +68,8 @@ func ResponseJson(w http.ResponseWriter, data interface{}, resinfo ResponseInfo)
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
 	}
-
+	return
 }
 
 func Load() *AllResponse {
@@ -93,4 +99,7 @@ func User() UserResponse {
 }
 func Auth() AuthResponse {
 	return Load().AuthResponse
+}
+func Movie() MovieResponse {
+	return Load().MovieResponse
 }
