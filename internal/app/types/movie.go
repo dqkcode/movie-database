@@ -14,6 +14,7 @@ type (
 		TrailersPath []string  `json:"trailers_path"`
 		ImagesPath   []string  `json:"images_path"`
 		Casts        []string  `json:"casts"`
+		Genres       []string  `json:"genres"`
 		Storyline    string    `json:"storyline"`
 		UserReviews  []string  `json:"user_reviews"`
 		MovieLength  int       `json:"movie_length"`

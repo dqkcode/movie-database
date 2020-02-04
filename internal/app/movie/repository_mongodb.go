@@ -56,12 +56,12 @@ func (m *MongoDBRepository) GetAllMovies(ctx context.Context) ([]*Movie, error) 
 	return movies, nil
 }
 
-func (m *MongoDBRepository) GetAllMoviesByUserId(ctx context.Context, id string) (*[]Movie, error) {
+func (m *MongoDBRepository) GetAllMoviesByUserId(ctx context.Context, id string) ([]*Movie, error) {
 	s := m.session.Clone()
 	defer s.Close()
 
-	movies := &[]Movie{}
-	err := m.getCollection(s).Find(bson.M{"user_id": id}).All(movies)
+	movies := []*Movie{}
+	err := m.getCollection(s).Find(bson.M{"user_id": id}).All(&movies)
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			return nil, ErrMovieNotFound
@@ -69,6 +69,21 @@ func (m *MongoDBRepository) GetAllMoviesByUserId(ctx context.Context, id string)
 		return nil, err
 	}
 	return movies, nil
+}
+
+func (m *MongoDBRepository) GetMovieById(ctx context.Context, id string) (*Movie, error) {
+	s := m.session.Clone()
+	defer s.Close()
+
+	movie := &Movie{}
+	err := m.getCollection(s).FindId(id).One(movie)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, ErrMovieNotFound
+		}
+		return nil, err
+	}
+	return movie, nil
 }
 
 func (m *MongoDBRepository) Update(ctx context.Context, movie *Movie) error {

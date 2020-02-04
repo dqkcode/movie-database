@@ -11,9 +11,9 @@ import (
 
 type (
 	Response struct {
-		Code    int
-		Data    interface{}
-		Message string
+		Code    int         `json:"code"`
+		Data    interface{} `json:"data"`
+		Message string      `json:"message"`
 	}
 	ResponseInfo struct {
 		Status  int    `yaml:"status"`

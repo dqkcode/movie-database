@@ -61,3 +61,9 @@ func (u *User) ConvertUserToUserInfo() *types.UserInfo {
 		Password:  u.Password,
 	}
 }
+
+func (u *User) TrimSecrectUserInfo() *User {
+	secrectInfo := User(*u)
+	secrectInfo.Password = ""
+	return &secrectInfo
+}

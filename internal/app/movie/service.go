@@ -13,7 +13,8 @@ type (
 		Create(ctx context.Context, movie Movie) (string, error)
 		DeleteById(ctx context.Context, id string) error
 		GetAllMovies(ctx context.Context) ([]*Movie, error)
-		GetAllMoviesByUserId(ctx context.Context, userId string) (*[]Movie, error)
+		GetAllMoviesByUserId(ctx context.Context, userId string) ([]*Movie, error)
+		GetMovieById(ctx context.Context, id string) (*Movie, error)
 		Update(ctx context.Context, movie *Movie) error
 	}
 
@@ -59,6 +60,16 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error)
 	return id, nil
 }
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) error {
+	u := ctx.Value("user").(*types.UserInfo)
+	if u.Role != "admin" {
+		m, err := s.GetMovieById(ctx, id)
+		if err != nil {
+			return ErrMovieNotFound
+		}
+		if m.UserId != u.ID {
+			return ErrPermissionDeny
+		}
+	}
 
 	t, err := time.Parse("02/01/2006", req.ReleaseTime)
 	if err != nil {
@@ -117,12 +128,24 @@ func (s *Service) GetAllMovies(ctx context.Context) ([]*types.MovieInfo, error) 
 
 	return data, nil
 }
-func (s *Service) GetAllMoviesByUserId(ctx context.Context) (*[]Movie, error) {
+func (s *Service) GetAllMoviesByUserId(ctx context.Context) ([]*types.MovieInfo, error) {
 	u := ctx.Value("user").(*types.UserInfo)
 	movies, err := s.repository.GetAllMoviesByUserId(ctx, u.ID)
 	if err != nil {
 		//TODO CAche err
 		return nil, err
 	}
-	return movies, nil
+	var data []*types.MovieInfo
+	for _, m := range movies {
+		data = append(data, m.ConvertMovieToMovieResponse())
+	}
+	return data, nil
+}
+func (s *Service) GetMovieById(ctx context.Context, id string) (*types.MovieInfo, error) {
+	movie, err := s.repository.GetMovieById(ctx, id)
+	if err != nil {
+		//TODO CAche err
+		return nil, err
+	}
+	return movie.ConvertMovieToMovieResponse(), nil
 }

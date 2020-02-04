@@ -15,7 +15,8 @@ type (
 		Create(ctx context.Context, req CreateRequest) (string, error)
 		DeleteById(ctx context.Context, id string) error
 		GetAllMovies(ctx context.Context) ([]*types.MovieInfo, error)
-		GetAllMoviesByUserId(ctx context.Context) (*[]Movie, error)
+		GetAllMoviesByUserId(ctx context.Context) ([]*types.MovieInfo, error)
+		GetMovieById(ctx context.Context, id string) (*types.MovieInfo, error)
 		Update(ctx context.Context, id string, movie UpdateRequest) error
 	}
 	Handler struct {
@@ -104,5 +105,20 @@ func (h *Handler) GetAllMoviesByUserId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	types.ResponseJson(w, movies, types.Normal().Success)
+	return
+}
+
+func (h *Handler) GetMovieById(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		types.ResponseJson(w, "", types.Normal().BadRequest)
+		return
+	}
+	movie, err := h.srv.GetMovieById(r.Context(), id)
+	if err != nil {
+		types.ResponseJson(w, "", types.Normal().NotFound)
+		return
+	}
+	types.ResponseJson(w, movie, types.Normal().Success)
 	return
 }

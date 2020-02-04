@@ -14,7 +14,7 @@ type (
 	service interface {
 		Register(ctx context.Context, req RegisterRequest) (string, error)
 		Update(ctx context.Context, req UpdateInfoRequest) error
-		FindUserById(ctx context.Context, id string) (*User, error)
+		FindUserById(ctx context.Context, id string) (*types.UserInfo, error)
 		DeleteUser(ctx context.Context, id string) error
 		GetAllUsers(ctx context.Context) ([]*types.UserInfo, error)
 		// ChangePassword(ctx context.Context, req ChangePasswordRequest) error
@@ -85,10 +85,8 @@ func (h *Handler) FindUserById(w http.ResponseWriter, r *http.Request) {
 		types.ResponseJson(w, "", types.User().UserNotFound)
 		return
 	}
-	data := map[string]interface{}{
-		"data": user,
-	}
-	types.ResponseJson(w, data, types.Normal().Success)
+
+	types.ResponseJson(w, user, types.Normal().Success)
 }
 
 func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {

@@ -96,7 +96,7 @@ func (s *Service) FindUserByEmail(ctx context.Context, email string) (*types.Use
 	return user.ConvertUserToUserInfo(), nil
 }
 
-func (s *Service) FindUserById(ctx context.Context, id string) (*User, error) {
+func (s *Service) FindUserById(ctx context.Context, id string) (*types.UserInfo, error) {
 	u := ctx.Value("user").(*types.UserInfo)
 	if u.Role != "admin" {
 		return nil, ErrPermissionDeny
@@ -105,7 +105,7 @@ func (s *Service) FindUserById(ctx context.Context, id string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return user.TrimSecrectUserInfo().ConvertUserToUserInfo(), nil
 }
 
 func (s *Service) DeleteUser(ctx context.Context, id string) error {
@@ -133,7 +133,7 @@ func (s *Service) GetAllUsers(ctx context.Context) ([]*types.UserInfo, error) {
 	}
 	var us []*types.UserInfo
 	for _, u := range users {
-		us = append(us, u.ConvertUserToUserInfo())
+		us = append(us, u.TrimSecrectUserInfo().ConvertUserToUserInfo())
 	}
 	return us, nil
 }

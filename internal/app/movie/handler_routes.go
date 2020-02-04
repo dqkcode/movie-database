@@ -44,5 +44,11 @@ func (h *Handler) Routes() []router.Route {
 			Path:        version1 + "/movies",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
+		{
+			Handler:     h.GetMovieById,
+			Method:      http.MethodGet,
+			Path:        version1 + "/movies/{id}",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
 	}
 }

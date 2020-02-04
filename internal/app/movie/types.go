@@ -18,6 +18,7 @@ type (
 		TrailersPath []string  `bson:"trailers_path"`
 		ImagesPath   []string  `bson:"images_path"`
 		Casts        []string  `bson:"casts"`
+		Genres       []string  `bson:"genres"`
 		Storyline    string    `bson:"storyline"`
 		UserReviews  []string  `bson:"user_reviews"`
 		MovieLength  int       `bson:"movie_length"`
@@ -34,6 +35,7 @@ type (
 		Writers     []string `validate:"required" json:"writers"`
 		Stars       []string `validate:"required" json:"stars"`
 		Casts       []string `validate:"required" json:"casts"`
+		Genres      []string `validate:"required" json:"genres"`
 		MovieLength int      `validate:"required" json:"movie_length"`
 		ReleaseTime string   `validate:"required" json:"release_time"`
 	}
@@ -47,6 +49,7 @@ type (
 		Stars        []string `json:"stars"`
 		TrailersPath []string `json:"trailers_path"`
 		ImagesPath   []string `json:"images_path"`
+		Genres       []string `json:"genres"`
 		Casts        []string `json:"casts"`
 		Storyline    string   `json:"storyline"`
 		UserReviews  []string `json:"user_reviews"`
@@ -67,6 +70,7 @@ func (m *Movie) ConvertMovieToMovieResponse() *types.MovieInfo {
 		TrailersPath: m.TrailersPath,
 		ImagesPath:   m.ImagesPath,
 		Casts:        m.Casts,
+		Genres:       m.Genres,
 		Storyline:    m.Storyline,
 		UserReviews:  m.UserReviews,
 		MovieLength:  m.MovieLength,
