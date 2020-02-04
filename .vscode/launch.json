@@ -12,5 +12,13 @@
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",            
         }
+        
+        {
+            "name": "Run Crawler",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/internal/app/crawler/CLI/main.go",            
+        }
     ]
 }
