@@ -94,10 +94,8 @@ func (m *MongoDBRepository) Update(ctx context.Context, movie *Movie) error {
 		"$set": bson.M{
 			"name":          movie.Name,
 			"rate":          movie.Rate,
-			"description":   movie.Description,
 			"director":      movie.Director,
 			"writers":       movie.Writers,
-			"stars":         movie.Stars,
 			"trailers_path": movie.TrailersPath,
 			"images_path":   movie.ImagesPath,
 			"casts":         movie.Casts,

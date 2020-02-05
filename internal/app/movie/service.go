@@ -31,23 +31,21 @@ func NewService(repo repository) *Service {
 
 func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error) {
 
-	t, err := time.Parse("02/01/2006", req.ReleaseTime)
-	if err != nil {
-		//TODO CAche err
-		return "", err
-	}
+	// t, err := time.Parse("02/01/2006", req.ReleaseTime)
+	// if err != nil {
+	// 	//TODO CAche err
+	// 	return "", err
+	// }
 	u := ctx.Value("user").(*types.UserInfo)
 
 	movie := Movie{
 		ID:          uuid.New().String(),
 		Name:        req.Name,
-		Description: req.Description,
 		Director:    req.Director,
 		Writers:     req.Writers,
-		Stars:       req.Stars,
 		Casts:       req.Casts,
 		MovieLength: req.MovieLength,
-		ReleaseTime: t,
+		ReleaseTime: req.ReleaseTime,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 		UserId:      u.ID,
@@ -71,25 +69,23 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) erro
 		}
 	}
 
-	t, err := time.Parse("02/01/2006", req.ReleaseTime)
-	if err != nil {
-		return err
-	}
+	// t, err := time.Parse("02/01/2006", req.ReleaseTime)
+	// if err != nil {
+	// 	return err
+	// }
 	movie := &Movie{
 		ID:           id,
 		Name:         req.Name,
 		Rate:         req.Rate,
-		Description:  req.Description,
 		Director:     req.Director,
 		Writers:      req.Writers,
-		Stars:        req.Stars,
 		TrailersPath: req.TrailersPath,
 		ImagesPath:   req.ImagesPath,
 		Casts:        req.Casts,
 		Storyline:    req.Storyline,
 		UserReviews:  req.UserReviews,
 		MovieLength:  req.MovieLength,
-		ReleaseTime:  t,
+		ReleaseTime:  req.ReleaseTime,
 		UpdatedAt:    time.Now(),
 	}
 	if err := s.repository.Update(ctx, movie); err != nil {

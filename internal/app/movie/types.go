@@ -10,11 +10,9 @@ type (
 	Movie struct {
 		ID           string    `bson:"_id"`
 		Name         string    `bson:"name"`
-		Rate         int8      `bson:"rate"`
-		Description  string    `bson:"description"`
+		Rate         string    `bson:"rate"`
 		Director     string    `bson:"director"`
 		Writers      []string  `bson:"writers"`
-		Stars        []string  `bson:"stars"`
 		TrailersPath []string  `bson:"trailers_path"`
 		ImagesPath   []string  `bson:"images_path"`
 		Casts        []string  `bson:"casts"`
@@ -22,7 +20,7 @@ type (
 		Storyline    string    `bson:"storyline"`
 		UserReviews  []string  `bson:"user_reviews"`
 		MovieLength  int       `bson:"movie_length"`
-		ReleaseTime  time.Time `bson:"release_time"`
+		ReleaseTime  string    `bson:"release_time"`
 		CreatedAt    time.Time `bson:"created_at"`
 		UpdatedAt    time.Time `bson:"updated_at"`
 		UserId       string    `bson:"user_id"`
@@ -30,10 +28,8 @@ type (
 
 	CreateRequest struct {
 		Name        string   `validate:"required" json:"name"`
-		Description string   `validate:"required" json:"description"`
 		Director    string   `validate:"required" json:"director"`
 		Writers     []string `validate:"required" json:"writers"`
-		Stars       []string `validate:"required" json:"stars"`
 		Casts       []string `validate:"required" json:"casts"`
 		Genres      []string `validate:"required" json:"genres"`
 		MovieLength int      `validate:"required" json:"movie_length"`
@@ -42,11 +38,9 @@ type (
 
 	UpdateRequest struct {
 		Name         string   `json:"name"`
-		Rate         int8     `json:"rate"`
-		Description  string   `json:"description"`
+		Rate         string   `json:"rate"`
 		Director     string   `json:"director"`
 		Writers      []string `json:"writers"`
-		Stars        []string `json:"stars"`
 		TrailersPath []string `json:"trailers_path"`
 		ImagesPath   []string `json:"images_path"`
 		Genres       []string `json:"genres"`
@@ -63,10 +57,8 @@ func (m *Movie) ConvertMovieToMovieResponse() *types.MovieInfo {
 		ID:           m.ID,
 		Name:         m.Name,
 		Rate:         m.Rate,
-		Description:  m.Description,
 		Director:     m.Director,
 		Writers:      m.Writers,
-		Stars:        m.Stars,
 		TrailersPath: m.TrailersPath,
 		ImagesPath:   m.ImagesPath,
 		Casts:        m.Casts,
