@@ -1,6 +1,7 @@
 package crawler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/dqkcode/movie-database/internal/app/types"
@@ -9,7 +10,7 @@ import (
 type (
 	service interface {
 		GetAllGenres() []string
-		CrawlAllMovies() ([]*types.MovieInfo, error)
+		CrawlAllMovies(context.Context) ([]*types.MovieInfo, error)
 	}
 	Handler struct {
 		srv service
@@ -28,7 +29,7 @@ func (h *Handler) GetAllGenres(w http.ResponseWriter, r *http.Request) {
 	types.ResponseJson(w, genres, types.Normal().Success)
 }
 func (h *Handler) CrawlAllMovies(w http.ResponseWriter, r *http.Request) {
-	movies, err := h.srv.CrawlAllMovies()
+	movies, err := h.srv.CrawlAllMovies(r.Context())
 	if err != nil {
 		return
 	}

@@ -1,6 +1,8 @@
 package crawler
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -14,7 +16,7 @@ import (
 
 type (
 	movieService interface {
-		// Create(ctx context.Context) (string, error)
+		CreateMovie(ctx context.Context, movie types.MovieInfo) error
 	}
 	Service struct {
 		movieService
@@ -29,8 +31,10 @@ func NewService(movieService movieService) *Service {
 	}
 }
 
-func NewServiceCLI() *Service {
-	return &Service{}
+func NewServiceCLI(movieService movieService) *Service {
+	return &Service{
+		movieService,
+	}
 }
 
 func (s *Service) GetAllGenres() []string {
@@ -48,14 +52,14 @@ func (s *Service) GetAllGenres() []string {
 	})
 
 	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
+		// fmt.Println("Visiting", r.URL.String())
 	})
 
 	c.Visit(domain + "/feature/genre/")
 	return links
 }
 
-func (s *Service) CrawlAllMovies() ([]*types.MovieInfo, error) {
+func (s *Service) CrawlAllMovies(ctx context.Context) ([]*types.MovieInfo, error) {
 	links := s.GetAllGenres()
 	var movies []*types.MovieInfo
 	c := colly.NewCollector()
@@ -63,7 +67,8 @@ func (s *Service) CrawlAllMovies() ([]*types.MovieInfo, error) {
 	for _, link := range links {
 		c.OnHTML("h3.lister-item-header", func(e *colly.HTMLElement) {
 			movieLink := e.ChildAttr("a", "href")
-			crawlMovieInfo(movieLink)
+			s.CrawlMovieInfo(ctx, movieLink)
+
 		})
 
 		c.OnRequest(func(r *colly.Request) {
@@ -80,11 +85,12 @@ func (s *Service) CrawlAllMovies() ([]*types.MovieInfo, error) {
 	return movies, nil
 }
 
-func crawlMovieInfo(link string) {
+func (s *Service) CrawlMovieInfo(ctx context.Context, link string) {
 	c := colly.NewCollector()
-	// cVideos := c.Clone()
 	c.OnHTML("#content-2-wide", func(e *colly.HTMLElement) {
 		title := e.DOM.Find(".title_wrapper h1")
+		name := e.DOM.Find(".title_wrapper h1").Text()
+		fmt.Printf("Crawling movie: %s\n", name)
 		subText := title.Next()
 		movieLength := subText.Find("time[datetime]").Text()
 		var genres, casts, writers, images, trailerPaths []string
@@ -93,14 +99,13 @@ func crawlMovieInfo(link string) {
 
 		})
 		releaseTime := e.DOM.Find(`a[title="See more release dates"]`).Text()
-		e.DOM.Find(".plot_summary .credit_summary_item").Eq(1).Each(func(_ int, s *goquery.Selection) {
 
+		e.DOM.Find(".plot_summary .credit_summary_item").Eq(1).Each(func(_ int, s *goquery.Selection) {
 			s.Find("a").Each(func(_ int, s *goquery.Selection) {
 				writers = append(writers, s.Text())
-				// writers = writers[:len(writers)-1]
 			})
-
 		})
+
 		rate := e.DOM.Find(`.ratingValue span[itemprop="ratingValue"]`).Text()
 
 		e.DOM.Find(".cast_list tbody tr").Each(func(_ int, s *goquery.Selection) {
@@ -108,20 +113,10 @@ func crawlMovieInfo(link string) {
 			star = strings.TrimSpace(star)
 			casts = append(casts, star)
 		})
+
 		e.DOM.Find(`div[class="mediastrip_big"] span a`).Each(func(_ int, s *goquery.Selection) {
 			href, _ := s.Attr("href")
-			// c.Visit(domain + href)
-
-			// c.OnRequest(func(r *colly.Request) {
-			// 	fmt.Println("Visiting", r.URL.String())
-			// })
-
-			// c.OnHTML(`#imdb-jw-video-1 video[class="jw-video jw-reset"]`, func(e *colly.HTMLElement) {
-			// 	src := e.Attr("src")
-
-			// trailerPaths = append(trailerPaths, src)
-			// })
-			trailerPaths = append(trailerPaths, getTrailerPaths(href))
+			trailerPaths = append(trailerPaths, getTrailerPaths(c, href))
 
 		})
 
@@ -145,7 +140,18 @@ func crawlMovieInfo(link string) {
 			ImagesPath:   images,
 			TrailersPath: trailerPaths,
 		}
-		fmt.Printf("movie: %+v\n", movie)
+		NewUser := &types.UserInfo{
+			ID: "123456789",
+			//TODO add some info
+		}
+		newCtx := context.WithValue(ctx, "crawler", NewUser)
+
+		err := s.movieService.CreateMovie(newCtx, movie)
+		if err != nil {
+			fmt.Printf("Err save movie %s:  %s\n", name, err)
+		}
+		fmt.Printf("Crawled movie :%v", name)
+
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -172,20 +178,44 @@ func convertTimeToInt(time string) int {
 	return result
 }
 
-func getTrailerPaths(link string) string {
-	c := colly.NewCollector()
-	var trailerPaths string
-	c.OnHTML(`video[class="jw-video jw-reset"`, func(e *colly.HTMLElement) {
+type (
+	Response struct {
+		VideoPlaybackId      string `json:"videoPlaybackId"`
+		VideoPlaybackToken   string `json:"videoPlaybackToken"`
+		VideoLegacyAdUrl     string `json:"videoLegacyAdUrl"`
+		VideoLegacyEncodings []struct {
+			Definition string `json:"definition"`
+			MimeType   string `json:"mimeType"`
+			URL        string `json:"url"`
+		} `json:"videoLegacyEncodings"`
+	}
+)
 
-		trailerPaths = e.Attr("src")
-		// trailerPaths, _ = e.DOM.Find(`video[class="jw-video jw-reset"]`).Attr("src")
+func getTrailerPaths(c *colly.Collector, link string) string {
+	// c := colly.NewCollector()
+	var trailerPath string
+	c.OnHTML(`#a-page`, func(e *colly.HTMLElement) {
+		v := c.Clone()
+		scriptText := e.DOM.Find("script").Text()
+		videoInfoKey := scriptText[strings.Index(scriptText, `playbackDataKey":["`)+19 : strings.Index(scriptText, `"],"activeWeblabs`)]
+		v.OnResponse(func(r *colly.Response) {
+			res := []Response{}
+			if err := json.Unmarshal(r.Body, &res); err != nil {
+				fmt.Println("Error: ", err)
+			}
+			if len(res[0].VideoLegacyEncodings) != 0 {
+				trailerPath = res[0].VideoLegacyEncodings[len(res[0].VideoLegacyEncodings)-1].URL
+			}
 
+		})
+
+		v.Visit(domain + "/ve/data/VIDEO_PLAYBACK_DATA?key=" + videoInfoKey)
 	})
+
 	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
 		r.Headers.Set("accept-language", "en-US,en;q=0.9")
 	})
 	c.Visit(domain + link)
 
-	return trailerPaths
+	return trailerPath
 }

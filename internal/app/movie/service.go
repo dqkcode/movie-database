@@ -57,6 +57,34 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error)
 	}
 	return id, nil
 }
+func (s *Service) CreateMovie(ctx context.Context, m types.MovieInfo) error {
+
+	u := ctx.Value("crawler").(*types.UserInfo)
+
+	movie := Movie{
+		ID:           m.ID,
+		Name:         m.Name,
+		MovieLength:  m.MovieLength,
+		ReleaseTime:  m.ReleaseTime,
+		Director:     m.Director,
+		Writers:      m.Writers,
+		Rate:         m.Rate,
+		Genres:       m.Genres,
+		Casts:        m.Casts,
+		Storyline:    m.Storyline,
+		ImagesPath:   m.ImagesPath,
+		TrailersPath: m.TrailersPath,
+		CreatedAt:    time.Now(),
+		UserId:       u.ID,
+	}
+	_, err := s.repository.Create(ctx, movie)
+	if err != nil {
+		//TODO CAche err
+		return err
+	}
+	return nil
+}
+
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) error {
 	u := ctx.Value("user").(*types.UserInfo)
 	if u.Role != "admin" {

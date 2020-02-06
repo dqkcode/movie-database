@@ -2,12 +2,15 @@ package api
 
 import (
 	"github.com/dqkcode/movie-database/internal/app/movie"
+	"github.com/dqkcode/movie-database/internal/pkg/db/mongodb"
 	"github.com/globalsign/mgo"
 )
 
-// func NewMovieService(repo *movie.MongoDBRepository) *movie.Service {
-// 	return movie.NewService(repo)
-// }
+func NewMovieServiceWithMongoRepo() *movie.Service {
+	session := mongodb.InitDBSession()
+	repo := movie.NewMongoDBRepository(session)
+	return movie.NewService(repo)
+}
 func NewMovieService(session *mgo.Session) *movie.Service {
 	repo := movie.NewMongoDBRepository(session)
 	return movie.NewService(repo)
