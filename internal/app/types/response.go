@@ -12,7 +12,7 @@ import (
 type (
 	Response struct {
 		Code    int         `json:"code"`
-		Data    interface{} `json:"data"`
+		Data    interface{} `json:"data,omitempty"`
 		Message string      `json:"message"`
 	}
 	ResponseInfo struct {
@@ -61,7 +61,9 @@ func ResponseJson(w http.ResponseWriter, data interface{}, resinfo ResponseInfo)
 	res := &Response{}
 	res.Code = resinfo.Code
 	res.Message = resinfo.Message
-	res.Data = data
+	if data != "" {
+		res.Data = data
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(resinfo.Status)

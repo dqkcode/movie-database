@@ -57,12 +57,11 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error)
 	}
 	return id, nil
 }
-func (s *Service) CreateMovie(ctx context.Context, m types.MovieInfo) error {
+func (s *Service) CreateMovie(m types.MovieInfo) error {
 
-	u := ctx.Value("crawler").(*types.UserInfo)
-
+	t := time.Now()
 	movie := Movie{
-		ID:           m.ID,
+		ID:           uuid.New().String(),
 		Name:         m.Name,
 		MovieLength:  m.MovieLength,
 		ReleaseTime:  m.ReleaseTime,
@@ -74,10 +73,11 @@ func (s *Service) CreateMovie(ctx context.Context, m types.MovieInfo) error {
 		Storyline:    m.Storyline,
 		ImagesPath:   m.ImagesPath,
 		TrailersPath: m.TrailersPath,
-		CreatedAt:    time.Now(),
-		UserId:       u.ID,
+		CreatedAt:    t,
+		UpdatedAt:    t,
 	}
-	_, err := s.repository.Create(ctx, movie)
+	newCtx := context.Background()
+	_, err := s.repository.Create(newCtx, movie)
 	if err != nil {
 		//TODO CAche err
 		return err

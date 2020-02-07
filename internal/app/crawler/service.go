@@ -1,22 +1,31 @@
 package crawler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/dqkcode/movie-database/internal/app/types"
-	"github.com/google/uuid"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly"
 )
 
 type (
+	Response struct {
+		VideoPlaybackId      string `json:"videoPlaybackId"`
+		VideoPlaybackToken   string `json:"videoPlaybackToken"`
+		VideoLegacyAdUrl     string `json:"videoLegacyAdUrl"`
+		VideoLegacyEncodings []struct {
+			Definition string `json:"definition"`
+			MimeType   string `json:"mimeType"`
+			URL        string `json:"url"`
+		} `json:"videoLegacyEncodings"`
+	}
+
 	movieService interface {
-		CreateMovie(ctx context.Context, movie types.MovieInfo) error
+		CreateMovie(movie types.MovieInfo) error
 	}
 	Service struct {
 		movieService
@@ -51,15 +60,11 @@ func (s *Service) GetAllGenres() []string {
 
 	})
 
-	c.OnRequest(func(r *colly.Request) {
-		// fmt.Println("Visiting", r.URL.String())
-	})
-
 	c.Visit(domain + "/feature/genre/")
 	return links
 }
 
-func (s *Service) CrawlAllMovies(ctx context.Context) ([]*types.MovieInfo, error) {
+func (s *Service) CrawlAllMovies() ([]*types.MovieInfo, error) {
 	links := s.GetAllGenres()
 	var movies []*types.MovieInfo
 	c := colly.NewCollector()
@@ -67,7 +72,7 @@ func (s *Service) CrawlAllMovies(ctx context.Context) ([]*types.MovieInfo, error
 	for _, link := range links {
 		c.OnHTML("h3.lister-item-header", func(e *colly.HTMLElement) {
 			movieLink := e.ChildAttr("a", "href")
-			s.CrawlMovieInfo(ctx, movieLink)
+			s.CrawlMovieInfo(movieLink)
 
 		})
 
@@ -78,27 +83,23 @@ func (s *Service) CrawlAllMovies(ctx context.Context) ([]*types.MovieInfo, error
 		c.Visit(domain + link)
 	}
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
-
 	return movies, nil
 }
 
-func (s *Service) CrawlMovieInfo(ctx context.Context, link string) {
+func (s *Service) CrawlMovieInfo(link string) {
 	c := colly.NewCollector()
 	c.OnHTML("#content-2-wide", func(e *colly.HTMLElement) {
+		var genres, casts, writers, images, trailerPaths []string
 		title := e.DOM.Find(".title_wrapper h1")
-		name := e.DOM.Find(".title_wrapper h1").Text()
-		fmt.Printf("Crawling movie: %s\n", name)
+		name := strings.TrimSpace(e.DOM.Find(".title_wrapper h1").Text())
+		fmt.Printf("\tCrawling movie: %s\n", name)
 		subText := title.Next()
 		movieLength := subText.Find("time[datetime]").Text()
-		var genres, casts, writers, images, trailerPaths []string
 		e.DOM.Find(`#titleStoryLine div[class="see-more inline canwrap"]`).Last().Find("a").Each(func(_ int, s *goquery.Selection) {
-			genres = append(genres, s.Text())
+			genres = append(genres, strings.TrimSpace(s.Text()))
 
 		})
-		releaseTime := e.DOM.Find(`a[title="See more release dates"]`).Text()
+		releaseTime := strings.TrimSpace(e.DOM.Find(`a[title="See more release dates"]`).Text())
 
 		e.DOM.Find(".plot_summary .credit_summary_item").Eq(1).Each(func(_ int, s *goquery.Selection) {
 			s.Find("a").Each(func(_ int, s *goquery.Selection) {
@@ -116,19 +117,22 @@ func (s *Service) CrawlMovieInfo(ctx context.Context, link string) {
 
 		e.DOM.Find(`div[class="mediastrip_big"] span a`).Each(func(_ int, s *goquery.Selection) {
 			href, _ := s.Attr("href")
-			trailerPaths = append(trailerPaths, getTrailerPaths(c, href))
+			path := getTrailerPaths(c, href)
+			if path != "" {
+				trailerPaths = append(trailerPaths, path)
+			}
 
 		})
 
-		e.DOM.Find(`div[class="mediastrip"] a img`).Each(func(_ int, s *goquery.Selection) {
-			src, _ := s.Attr("src")
-			images = append(images, src)
-		})
+		// e.DOM.Find(`div[class="mediastrip"] a`).Each(func(_ int, s *goquery.Selection) {
+		// 	src, _ := s.Children().Attr("src")
+		// 	images = append(images, src)
+		// })
+
 		storyLine := strings.TrimSpace(e.DOM.Find(`#titleStoryLine div[class="inline canwrap"]`).First().Find("p span").Text())
 
 		movie := types.MovieInfo{
-			ID:           uuid.New().String(),
-			Name:         e.DOM.Find(".title_wrapper h1").Text(),
+			Name:         name,
 			MovieLength:  convertTimeToInt(movieLength),
 			ReleaseTime:  releaseTime,
 			Director:     e.DOM.Find(".plot_summary .credit_summary_item a").First().Text(),
@@ -140,17 +144,12 @@ func (s *Service) CrawlMovieInfo(ctx context.Context, link string) {
 			ImagesPath:   images,
 			TrailersPath: trailerPaths,
 		}
-		NewUser := &types.UserInfo{
-			ID: "123456789",
-			//TODO add some info
-		}
-		newCtx := context.WithValue(ctx, "crawler", NewUser)
 
-		err := s.movieService.CreateMovie(newCtx, movie)
+		err := s.movieService.CreateMovie(movie)
 		if err != nil {
-			fmt.Printf("Err save movie %s:  %s\n", name, err)
+			fmt.Printf("\tErr save movie %s:  %s\n", name, err)
 		}
-		fmt.Printf("Crawled movie :%v", name)
+		fmt.Printf("\tCrawled movie :%v\n", name)
 
 	})
 
@@ -169,7 +168,7 @@ func convertTimeToInt(time string) int {
 	if err != nil {
 		return -1
 	}
-	mm, err := strconv.Atoi(t[1][:2])
+	mm, err := strconv.Atoi(t[1][:len(t[1])-3])
 	if err != nil {
 		return -1
 	}
@@ -178,21 +177,7 @@ func convertTimeToInt(time string) int {
 	return result
 }
 
-type (
-	Response struct {
-		VideoPlaybackId      string `json:"videoPlaybackId"`
-		VideoPlaybackToken   string `json:"videoPlaybackToken"`
-		VideoLegacyAdUrl     string `json:"videoLegacyAdUrl"`
-		VideoLegacyEncodings []struct {
-			Definition string `json:"definition"`
-			MimeType   string `json:"mimeType"`
-			URL        string `json:"url"`
-		} `json:"videoLegacyEncodings"`
-	}
-)
-
 func getTrailerPaths(c *colly.Collector, link string) string {
-	// c := colly.NewCollector()
 	var trailerPath string
 	c.OnHTML(`#a-page`, func(e *colly.HTMLElement) {
 		v := c.Clone()
@@ -203,18 +188,13 @@ func getTrailerPaths(c *colly.Collector, link string) string {
 			if err := json.Unmarshal(r.Body, &res); err != nil {
 				fmt.Println("Error: ", err)
 			}
-			if len(res[0].VideoLegacyEncodings) != 0 {
+			if len(res) != 0 && len(res[0].VideoLegacyEncodings) != 0 {
 				trailerPath = res[0].VideoLegacyEncodings[len(res[0].VideoLegacyEncodings)-1].URL
 			}
-
 		})
-
 		v.Visit(domain + "/ve/data/VIDEO_PLAYBACK_DATA?key=" + videoInfoKey)
 	})
 
-	c.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("accept-language", "en-US,en;q=0.9")
-	})
 	c.Visit(domain + link)
 
 	return trailerPath

@@ -19,7 +19,7 @@ type (
 		Gender    int       `json:"gender"`
 		Email     string    `json:"email"`
 		Role      string    `json:"role"`
-		Password  string    `json:"password"`
+		Password  string    `json:"password,omitempty"`
 		Locked    bool      `json:"locked"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
