@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 
@@ -14,7 +15,7 @@ type (
 	service interface {
 		Create(ctx context.Context, req CreateRequest) (string, error)
 		DeleteById(ctx context.Context, id string) error
-		GetAllMovies(ctx context.Context) ([]*types.MovieInfo, error)
+		GetAllMovies(ctx context.Context, req FindRequest) ([]*types.MovieInfo, error)
 		GetAllMoviesByUserId(ctx context.Context) ([]*types.MovieInfo, error)
 		GetMovieById(ctx context.Context, id string) (*types.MovieInfo, error)
 		Update(ctx context.Context, id string, movie UpdateRequest) error
@@ -82,7 +83,48 @@ func (h *Handler) DeleteMovieById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllMovies(w http.ResponseWriter, r *http.Request) {
-	movies, err := h.srv.GetAllMovies(r.Context())
+
+	queries := r.URL.Query()
+	movieLength, err := strconv.Atoi(queries.Get("max_length"))
+	if err != nil {
+		// TODO catch err
+		// return
+
+	}
+	offset, err := strconv.Atoi(queries.Get("offset"))
+	if err != nil {
+		// TODO catch err
+		// return
+
+	}
+	limit, err := strconv.Atoi(queries.Get("limit"))
+	if err != nil {
+		// TODO catch err
+		// return
+
+	}
+	rate, err := strconv.ParseFloat(queries.Get("rate"), 8)
+	if err != nil {
+		// TODO catch err
+		// return
+
+	}
+	req := FindRequest{
+		Name:        queries.Get("name"),
+		Rate:        rate,
+		Directors:   queries["directors"],
+		ReleaseTime: queries.Get("release_time"),
+		CreatedByID: queries.Get("create_by_id"),
+		Offset:      offset,
+		Limit:       limit,
+		MovieLength: movieLength,
+		Casts:       queries["casts"],
+		Writers:     queries["writers"],
+		Genres:      queries["genres"],
+		Selects:     queries["selects"],
+		SortBy:      queries["sort_by"],
+	}
+	movies, err := h.srv.GetAllMovies(r.Context(), req)
 	if err != nil {
 		if err == ErrPermissionDeny {
 			types.ResponseJson(w, "", types.Normal().PermissionDeny)

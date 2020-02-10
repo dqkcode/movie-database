@@ -35,8 +35,6 @@ func (h *Handler) Routes() []router.Route {
 			Handler:     h.GetAllMovies,
 			Method:      http.MethodGet,
 			Path:        version1 + "/movies",
-			Queries:     []string{"role", "admin"},
-			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{
 			Handler:     h.GetAllMoviesByUserId,

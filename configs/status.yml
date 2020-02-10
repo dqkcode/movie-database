@@ -62,7 +62,7 @@ auth:
   password_wrong:
     status: 401
     code: 1203
-    message: "Password wrong"
+    message: "Email/Password is invalid"
   unauthorized:
     status: 401
     code: 1204
