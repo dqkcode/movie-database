@@ -80,3 +80,7 @@ movie:
     status: 500
     code: 1302
     message: "Delete movie failed"
+  not_found:
+    status: 404
+    code: 1303
+    message: "Movie not found"

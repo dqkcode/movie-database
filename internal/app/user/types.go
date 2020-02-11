@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	MALE Gender = iota
-	FEMALE
-	OTHER
+	MALE   Gender = 1
+	FEMALE Gender = 2
+	OTHER  Gender = 3
 )
 
 type (

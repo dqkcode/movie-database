@@ -41,7 +41,7 @@ func LoadConfigFromEnv() Config {
 	return conf
 }
 
-func NewPool() (*email.Pool, error) {
+func NewPool() (*Mailer, error) {
 	conf := LoadConfigFromEnv()
 	addr := conf.Host + conf.Port
 	p, err := email.NewPool(addr, conf.Count, smtp.PlainAuth("", conf.UserName, conf.Password, conf.Host))
@@ -49,8 +49,11 @@ func NewPool() (*email.Pool, error) {
 		logrus.Errorf("err create pool email: %v", err)
 		return nil, err
 	}
-	return p, nil
+	return &Mailer{
+		pool: p,
+	}, nil
 }
+
 func (m *Mailer) Send(e Email, timeOut time.Duration) {
 	em := &email.Email{
 		From:    e.From,

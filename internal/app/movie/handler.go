@@ -59,6 +59,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.srv.Update(r.Context(), id, req); err != nil {
+		if err == ErrMovieNotFound {
+			types.ResponseJson(w, "", types.Movie().NotFound)
+			return
+		}
 		types.ResponseJson(w, "", types.Normal().Internal)
 		return
 
@@ -85,30 +89,14 @@ func (h *Handler) DeleteMovieById(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetAllMovies(w http.ResponseWriter, r *http.Request) {
 
 	queries := r.URL.Query()
-	movieLength, err := strconv.Atoi(queries.Get("max_length"))
-	if err != nil {
-		// TODO catch err
-		// return
+	movieLength, _ := strconv.Atoi(queries.Get("max_length"))
 
-	}
-	offset, err := strconv.Atoi(queries.Get("offset"))
-	if err != nil {
-		// TODO catch err
-		// return
+	offset, _ := strconv.Atoi(queries.Get("offset"))
 
-	}
-	limit, err := strconv.Atoi(queries.Get("limit"))
-	if err != nil {
-		// TODO catch err
-		// return
+	limit, _ := strconv.Atoi(queries.Get("limit"))
 
-	}
-	rate, err := strconv.ParseFloat(queries.Get("rate"), 8)
-	if err != nil {
-		// TODO catch err
-		// return
+	rate, _ := strconv.ParseFloat(queries.Get("rate"), 8)
 
-	}
 	req := FindRequest{
 		Name:        queries.Get("name"),
 		Rate:        rate,
@@ -136,6 +124,7 @@ func (h *Handler) GetAllMovies(w http.ResponseWriter, r *http.Request) {
 	types.ResponseJson(w, movies, types.Normal().Success)
 	return
 }
+
 func (h *Handler) GetAllMoviesByUserId(w http.ResponseWriter, r *http.Request) {
 	movies, err := h.srv.GetAllMoviesByUserId(r.Context())
 	if err != nil {

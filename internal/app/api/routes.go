@@ -34,12 +34,15 @@ func InitRouter() *mux.Router {
 	crawlerSrv := NewCrawlerService(movieService)
 	crawlerHandler := NewCrawlerHandler(crawlerSrv)
 
+	//watchlist
+	watchlistHandler := NewWatchlistHandler(session)
 	//router
 	routes := make([]rt.Route, 0)
 	routes = append(routes, usersHandler.Routes()...)
 	routes = append(routes, authHandler.Routes()...)
 	routes = append(routes, moviesHandler.Routes()...)
 	routes = append(routes, crawlerHandler.Routes()...)
+	routes = append(routes, watchlistHandler.Routes()...)
 
 	//add attributes to router
 	for _, r := range routes {

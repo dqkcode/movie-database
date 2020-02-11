@@ -41,10 +41,12 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err == ErrDBQuery {
 		types.ResponseJson(w, "", types.Normal().Internal)
 		return
-	} else if err == ErrUserAlreadyExist {
+	}
+	if err == ErrUserAlreadyExist {
 		types.ResponseJson(w, "", types.User().DuplicateEmail)
 		return
-	} else if err == ErrCreateUserFailed {
+	}
+	if err == ErrCreateUserFailed {
 		types.ResponseJson(w, "", types.User().CreateFailed)
 		return
 	}
@@ -108,6 +110,7 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	types.ResponseJson(w, "", types.Normal().Success)
 }
+
 func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.srv.GetAllUsers(r.Context())

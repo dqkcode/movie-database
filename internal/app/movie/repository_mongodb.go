@@ -109,6 +109,9 @@ func (m *MongoDBRepository) GetAllMovies(ctx context.Context, req FindRequest) (
 		}
 		return nil, err
 	}
+	if len(movies) == 0 {
+		return nil, ErrMovieNotFound
+	}
 	return movies, nil
 }
 
@@ -177,6 +180,10 @@ func (m *MongoDBRepository) Update(ctx context.Context, movie *Movie) error {
 			"updated_at":    time.Now(),
 		}})
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return ErrMovieNotFound
+		}
+
 		return ErrUpdateMovieFailed
 	}
 	return nil

@@ -2,10 +2,10 @@ package movie
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/dqkcode/movie-database/internal/app/types"
+
 	"github.com/google/uuid"
 )
 
@@ -106,17 +106,17 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) erro
 	// if err != nil {
 	// 	return err
 	// }
-	rate, err := strconv.ParseFloat(req.Rate, 8)
+	// rate, err := strconv.ParseFloat(req.Rate, 8)
 
-	if err != nil {
-		//TODO cache err
-		return err
-	}
+	// if err != nil {
+	// 	//TODO cache err
+	// 	return err
+	// }
 	t := time.Now()
 	movie := &Movie{
 		ID:           id,
 		Name:         req.Name,
-		Rate:         rate,
+		Rate:         req.Rate,
 		Directors:    req.Directors,
 		Writers:      req.Writers,
 		TrailersPath: req.TrailersPath,

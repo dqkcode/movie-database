@@ -38,6 +38,7 @@ type (
 	MovieResponse struct {
 		Created      ResponseInfo `yaml:"created"`
 		DeleteFailed ResponseInfo `yaml:"delete_failed"`
+		NotFound     ResponseInfo `yaml:"not_found"`
 	}
 	NormalResponse struct {
 		Success        ResponseInfo `yaml:"success"`

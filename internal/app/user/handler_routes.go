@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/dqkcode/movie-database/internal/app/auth"
-
 	"github.com/dqkcode/movie-database/internal/pkg/http/router"
 )
 

@@ -31,6 +31,7 @@ func (m *MongoDBRepository) Create(ctx context.Context, user User) (string, erro
 		return "", err
 	}
 	return user.ID, nil
+
 }
 
 func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
@@ -39,13 +40,31 @@ func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
 	u := ctx.Value("user").(*types.UserInfo)
 
 	c := m.getCollection(s)
+	obj := bson.M{
+		"updated_at": time.Now(),
+	}
+
+	if user.FirstName != "-" && user.FirstName != "" {
+		obj["first_name"] = user.FirstName
+	} else if user.FirstName == "-" {
+		obj["first_name"] = ""
+	}
+
+	if user.LastName != "-" && user.LastName != "" {
+		obj["last_name"] = user.LastName
+	} else if user.LastName == "-" {
+		obj["last_name"] = ""
+	}
+
+	if user.Gender >= 1 && user.Gender <= 3 {
+		obj["gender"] = user.Gender
+	} else {
+		obj["gender"] = 3
+	}
+
 	err := c.UpdateId(u.ID, bson.M{
-		"$set": bson.M{
-			"first_name": user.FirstName,
-			"last_name":  user.LastName,
-			"gender":     user.Gender,
-			"updated_at": time.Now(),
-		}})
+		"$set": obj,
+	})
 	if err != nil {
 		return ErrUpdateUserFailed
 	}

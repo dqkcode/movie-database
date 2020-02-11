@@ -39,7 +39,7 @@ type (
 
 	UpdateRequest struct {
 		Name         string   `json:"name"`
-		Rate         string   `json:"rate"`
+		Rate         float64  `json:"rate"`
 		Directors    []string `json:"directors"`
 		Writers      []string `json:"writers"`
 		TrailersPath []string `json:"trailers_path"`
