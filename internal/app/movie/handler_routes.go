@@ -14,10 +14,26 @@ func (h *Handler) Routes() []router.Route {
 
 	return []router.Route{
 		{
+			Handler: h.GetAllMovies,
+			Method:  http.MethodGet,
+			Path:    version1 + "/movies",
+		},
+		{
+			Handler:     h.GetAllMoviesByUserId,
+			Method:      http.MethodGet,
+			Path:        version1 + "/movies",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
 			Handler:     h.CreateMovie,
 			Method:      http.MethodPost,
 			Path:        version1 + "/movies",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
+			Handler: h.GetMovieById,
+			Method:  http.MethodGet,
+			Path:    version1 + "/movies/{id}",
 		},
 		{
 			Handler:     h.DeleteMovieById,
@@ -28,23 +44,6 @@ func (h *Handler) Routes() []router.Route {
 		{
 			Handler:     h.Update,
 			Method:      http.MethodPut,
-			Path:        version1 + "/movies/{id}",
-			Middlewares: []router.Middleware{auth.AuthMiddleware},
-		},
-		{
-			Handler:     h.GetAllMovies,
-			Method:      http.MethodGet,
-			Path:        version1 + "/movies",
-		},
-		{
-			Handler:     h.GetAllMoviesByUserId,
-			Method:      http.MethodGet,
-			Path:        version1 + "/movies",
-			Middlewares: []router.Middleware{auth.AuthMiddleware},
-		},
-		{
-			Handler:     h.GetMovieById,
-			Method:      http.MethodGet,
 			Path:        version1 + "/movies/{id}",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},

@@ -28,5 +28,5 @@ local: build
 	./$(PROJECT_NAME)-$(BUILD_VERSION).bin
 img:
 	docker build -t movies -f deployment/docker/Dockerfile .
-dcu: build img
+dcu: fmt vet install build img
 	cd deployment/docker && docker-compose up

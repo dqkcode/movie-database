@@ -66,7 +66,7 @@ func (m *MongoDBRepository) GetAllMovies(ctx context.Context, req FindRequest) (
 			"$in": req.Directors,
 		}
 	}
-	//TODO check
+
 	if req.Name != "" {
 		r["name"] = bson.RegEx{
 			Pattern: req.Name,

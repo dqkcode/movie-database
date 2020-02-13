@@ -53,6 +53,7 @@ func (r *MongoDBRepository) AddMovieToWatchlist(movieID, watchlistID string) err
 	}
 	return nil
 }
+
 func (r *MongoDBRepository) DeleteMovieInWatchlist(movieID, watchlistID string) error {
 	s := r.session.Clone()
 	defer s.Close()
@@ -61,7 +62,35 @@ func (r *MongoDBRepository) DeleteMovieInWatchlist(movieID, watchlistID string) 
 		"watchlist_id": watchlistID,
 		"movie_id":     movieID,
 	}
-	if err := r.getCollection("watchlist_movie", s).Remove(doc); err != nil {
+	err := r.getCollection("watchlist_movie", s).Remove(doc)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrWatchlistNotFound
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *MongoDBRepository) DeleteWatchlist(watchlistID string) error {
+	s := r.session.Clone()
+	defer s.Close()
+	doc := bson.M{
+		"watchlist_id": watchlistID,
+	}
+	_, err := r.getCollection("watchlist_movie", s).RemoveAll(doc)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrWatchlistNotFound
+	}
+	if err != nil {
+		return err
+	}
+
+	err = r.getCollection("watchlist", s).RemoveId(watchlistID)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrWatchlistNotFound
+	}
+	if err != nil {
 		return err
 	}
 	return nil
@@ -71,13 +100,24 @@ func (r *MongoDBRepository) GetWatchlistById(id string) (*Watchlist, error) {
 	s := r.session.Clone()
 	defer s.Close()
 	w := &Watchlist{}
-	if err := r.getCollection("watchlist", s).FindId(id).One(w); err != nil {
-		if errors.Is(err, mgo.ErrNotFound) {
-			return nil, ErrWatchlistNotFound
-		}
+	err := r.getCollection("watchlist", s).FindId(id).One(w)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return nil, ErrWatchlistNotFound
+	}
+	if err != nil {
 		return nil, err
 	}
 	return w, nil
+}
+
+func (r *MongoDBRepository) GetAllWatchlistByUserId(id string) ([]*Watchlist, error) {
+	s := r.session.Clone()
+	defer s.Close()
+	list := []*Watchlist{}
+	if err := r.getCollection("watchlist", s).Find(bson.M{"user_id": id}).All(&list); err != nil {
+		return nil, err
+	}
+	return list, nil
 }
 
 func (r *MongoDBRepository) ListAllMovies(id string) ([]*WatchlistMovie, error) {
@@ -88,6 +128,16 @@ func (r *MongoDBRepository) ListAllMovies(id string) ([]*WatchlistMovie, error) 
 		return nil, err
 	}
 	return list, nil
+}
+
+func (r *MongoDBRepository) UpdateStatusWatchList(ctx context.Context, watchlistID string, status bool) error {
+	s := r.session.Clone()
+	defer s.Close()
+	obj := bson.M{
+		"$set": bson.M{"share": status},
+	}
+	r.getCollection("watchlist", s).UpdateId(watchlistID, obj)
+	return nil
 }
 
 func (r *MongoDBRepository) getCollection(name string, s *mgo.Session) *mgo.Collection {

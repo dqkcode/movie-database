@@ -18,26 +18,49 @@ func (h *Handler) Routes() []router.Route {
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{
+			Handler:     h.GetAllWatchlistByUserId,
+			Method:      http.MethodGet,
+			Path:        version1 + "/watchlists",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
 			Handler:     h.AddMovieToWatchlist,
 			Method:      http.MethodPost,
-			Path:        version1 + "/watchlists",
+			Path:        version1 + "/watchlists/{id}/movies",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+		{
+			Handler:     h.DeleteWatchlist,
+			Method:      http.MethodDelete,
+			Path:        version1 + "/watchlists/{id}",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{
 			Handler:     h.DeleteMovieInWatchlist,
 			Method:      http.MethodDelete,
-			Path:        version1 + "/watchlists/{watchlist_id}/movies/{movie_id}",
+			Path:        version1 + "/watchlists/{watchlistID}/{movieID}",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{
-			Handler: h.GetWatchlistById,
-			Method:  http.MethodGet,
-			Path:    version1 + "/watchlists/{id}",
+			Handler:     h.GetAllMoviesInWatchlist,
+			Method:      http.MethodGet,
+			Path:        version1 + "/watchlists/{id}",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+			Queries:     []string{"list", "movie"},
 		},
 		{
-			Handler: h.GetMovieInWatchlist,
-			Method:  http.MethodGet,
-			Path:    version1 + "/watchlists/{id}/movies",
+			Handler:     h.GetWatchlistById,
+			Method:      http.MethodGet,
+			Path:        version1 + "/watchlists/{id}",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+		},
+
+		{
+			Handler:     h.UpdateStatusWatchList,
+			Method:      http.MethodPut,
+			Path:        version1 + "/watchlists/{id}",
+			Middlewares: []router.Middleware{auth.AuthMiddleware},
+			Queries:     []string{"change", "status", "share", "{share:true|false}"},
 		},
 	}
 }

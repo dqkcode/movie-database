@@ -31,6 +31,7 @@ type (
 
 var (
 	ErrWatchlistNotFound = errors.New("error watchlist not found")
+	ErrPermissionDeny    = errors.New("error permission deny")
 	ErrDB                = errors.New("error DB")
 )
 

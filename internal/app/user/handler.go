@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -83,6 +84,11 @@ func (h *Handler) FindUserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	user, err := h.srv.FindUserById(r.Context(), id)
+
+	if errors.Is(err, ErrPermissionDeny) {
+		types.ResponseJson(w, "", types.Normal().PermissionDeny)
+		return
+	}
 	if err != nil {
 		types.ResponseJson(w, "", types.User().UserNotFound)
 		return
