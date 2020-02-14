@@ -8,7 +8,7 @@ WORKDIR /home
 # CMD ["./movies-0.1.bin"]
 
 
-COPY ./ /home
+# COPY ./ /home
 
 RUN go get github.com/githubnemo/CompileDaemon
 

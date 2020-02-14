@@ -77,7 +77,7 @@ func (s *Service) DeleteWatchlist(ctx context.Context, watchlistID string) error
 	u := ctx.Value("user").(*types.UserInfo)
 	w, err := s.repo.GetWatchlistById(watchlistID)
 	if err != nil {
-		return fmt.Errorf("err from GetWatchlistById: err =  %w", err)
+		return fmt.Errorf("err from GetWatchlistById err =  %w", err)
 	}
 	if u.ID != w.UserID {
 		return ErrPermissionDeny

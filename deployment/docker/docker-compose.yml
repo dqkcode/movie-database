@@ -9,12 +9,14 @@ services:
     volumes:
       - /opt/data/mongo_dev:/data/db
     restart: always
-  movies:
-    image: "movies"
-    hostname: movies
+  movie:
+    image: "movie"
+    hostname: movie
     ports:
       - "8080:8080"
     restart: always
+    volumes:  
+      - ../../:/home
     environment: 
       - MONGODB_ADDRS=mongodb:27017
       - STATUS_FILE_PATH=/home/configs/status.yml
