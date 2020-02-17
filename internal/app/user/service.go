@@ -42,7 +42,8 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (string, er
 	err := s.repository.CheckEmailIsRegisted(ctx, req.Email)
 	if err == ErrDBQuery {
 		return "", err
-	} else if err == ErrUserAlreadyExist {
+	}
+	if err == ErrUserAlreadyExist {
 		return "", err
 	}
 
