@@ -10,6 +10,11 @@ const (
 	OTHER  Gender = 3
 )
 
+const (
+	RoleAdmin  Role = "admin"
+	RoleNormal Role = "normal"
+)
+
 type (
 	Gender   int
 	UserInfo struct {
@@ -24,4 +29,5 @@ type (
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 	}
+	Role string
 )

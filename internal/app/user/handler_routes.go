@@ -20,7 +20,7 @@ func (h *Handler) Routes() []router.Route {
 		{
 			Handler:     h.Update,
 			Method:      http.MethodPut,
-			Path:        version1 + "/users",
+			Path:        version1 + "/users/{id}",
 			Middlewares: []router.Middleware{auth.AuthMiddleware},
 		},
 		{

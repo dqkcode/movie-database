@@ -2,6 +2,7 @@ package crawler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -97,7 +98,7 @@ func (s *Service) CrawlMovieInfo(link string) {
 		releaseTime := strings.TrimSpace(e.DOM.Find(`a[title="See more release dates"]`).Text())
 		mv, err := s.GetMovieByName(name)
 		fmt.Printf("mv.Name :%v, name:%v, == %v \n", mv.Name, name, mv.Name == name)
-		if err == types.ErrMovieNotFound || mv.ReleaseTime != releaseTime {
+		if errors.Is(err, types.ErrMovieNotFound) || mv.ReleaseTime != releaseTime {
 
 			fmt.Printf("\tCrawling movie ❚❚: %s\n", name)
 			subText := title.Next()

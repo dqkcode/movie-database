@@ -2,6 +2,8 @@ package movie
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/dqkcode/movie-database/internal/app/types"
@@ -14,7 +16,6 @@ type (
 		Create(ctx context.Context, movie Movie) (string, error)
 		DeleteById(ctx context.Context, id string) error
 		GetAllMovies(ctx context.Context, req FindRequest) ([]*Movie, error)
-		GetAllMoviesByUserId(ctx context.Context, userId string) ([]*Movie, error)
 		GetMovieByName(ctx context.Context, name string) (*Movie, error)
 		GetMovieById(ctx context.Context, id string) (*Movie, error)
 		Update(ctx context.Context, movie *Movie) error
@@ -32,13 +33,7 @@ func NewService(repo repository) *Service {
 }
 
 func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error) {
-
-	// t, err := time.Parse("02/01/2006", req.ReleaseTime)
-	// if err != nil {
-	// 	//TODO CAche err
-	// 	return "", err
-	// }
-	u := ctx.Value("user").(*types.UserInfo)
+	u := ctx.Value(types.UserContextKey).(*types.UserInfo)
 	t := time.Now()
 	movie := Movie{
 		ID:          uuid.New().String(),
@@ -55,15 +50,13 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error)
 	}
 	id, err := s.repository.Create(ctx, movie)
 	if err != nil {
-		//TODO CAche err
-		return "", err
+		return "", fmt.Errorf("failed to create movie, err: %w", err)
 	}
 	return id, nil
 }
 
 //CreateMovie for crawler use
 func (s *Service) CreateMovie(m types.MovieInfo) error {
-
 	t := time.Now()
 	movie := Movie{
 		ID:           uuid.New().String(),
@@ -84,34 +77,20 @@ func (s *Service) CreateMovie(m types.MovieInfo) error {
 	newCtx := context.Background()
 	_, err := s.repository.Create(newCtx, movie)
 	if err != nil {
-		//TODO CAche err
-		return err
+		return fmt.Errorf("failed to create movie, err: %w", err)
 	}
 	return nil
 }
 
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) error {
-	u := ctx.Value("user").(*types.UserInfo)
-	if u.Role != "admin" {
-		m, err := s.GetMovieById(ctx, id)
-		if err != nil {
-			return ErrMovieNotFound
-		}
-		if m.UserId != u.ID {
-			return ErrPermissionDeny
-		}
+	u := ctx.Value(types.UserContextKey).(*types.UserInfo)
+	m, err := s.GetMovieById(ctx, id)
+	if err != nil {
+		return err
 	}
-
-	// t, err := time.Parse("02/01/2006", req.ReleaseTime)
-	// if err != nil {
-	// 	return err
-	// }
-	// rate, err := strconv.ParseFloat(req.Rate, 8)
-
-	// if err != nil {
-	// 	//TODO cache err
-	// 	return err
-	// }
+	if u.Role != "admin" && m.UserId != u.ID {
+		return ErrPermissionDeny
+	}
 	t := time.Now()
 	movie := &Movie{
 		ID:           id,
@@ -129,62 +108,56 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) erro
 		UpdatedAt:    &t,
 	}
 	if err := s.repository.Update(ctx, movie); err != nil {
-		//TODO CAche err
-		return err
+		return fmt.Errorf("failed to update movie, err: %w", err)
 	}
 	return nil
 }
+
 func (s *Service) DeleteById(ctx context.Context, id string) error {
-
-	err := s.repository.DeleteById(ctx, id)
+	u := ctx.Value(types.UserContextKey).(*types.UserInfo)
+	m, err := s.GetMovieById(ctx, id)
 	if err != nil {
-		//TODO CAche err
 		return err
+	}
+	if u.Role != "admin" && m.UserId != u.ID {
+		return ErrPermissionDeny
+	}
+	err = s.repository.DeleteById(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to delete movie, err: %w", err)
 	}
 	return nil
 }
-func (s *Service) GetAllMovies(ctx context.Context, req FindRequest) ([]*types.MovieInfo, error) {
 
+func (s *Service) GetAllMovies(ctx context.Context, req FindRequest) ([]*types.MovieInfo, error) {
 	if req.Offset > 50 {
 		req.Offset = 50
 	}
 	movies, err := s.repository.GetAllMovies(ctx, req)
+	if err == ErrMovieNotFound {
+		return nil, ErrMovieNotFound
+	}
 	if err != nil {
-		//TODO CAche err
-		return nil, err
+		return nil, fmt.Errorf("failed to get all movie, err: %w", err)
 	}
 	var data []*types.MovieInfo
 	for _, m := range movies {
 		mr := m.ConvertMovieToMovieResponse()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to convert movie, err: %w", err)
 		}
 		data = append(data, mr)
-	}
-
-	return data, nil
-}
-
-func (s *Service) GetAllMoviesByUserId(ctx context.Context) ([]*types.MovieInfo, error) {
-	u := ctx.Value("user").(*types.UserInfo)
-	movies, err := s.repository.GetAllMoviesByUserId(ctx, u.ID)
-	if err != nil {
-		//TODO CAche err
-		return nil, err
-	}
-	var data []*types.MovieInfo
-	for _, m := range movies {
-		data = append(data, m.ConvertMovieToMovieResponse())
 	}
 	return data, nil
 }
 
 func (s *Service) GetMovieByName(name string) (*types.MovieInfo, error) {
-
 	ctx := context.Background()
 	movie, err := s.repository.GetMovieByName(ctx, name)
+	if errors.Is(err, ErrMovieNotFound) {
+		return nil, types.ErrMovieNotFound
+	}
 	if err != nil {
-		//TODO CAche err
 		return nil, err
 	}
 	return movie.ConvertMovieToMovieResponse(), nil
@@ -193,7 +166,6 @@ func (s *Service) GetMovieByName(name string) (*types.MovieInfo, error) {
 func (s *Service) GetMovieById(ctx context.Context, id string) (*types.MovieInfo, error) {
 	movie, err := s.repository.GetMovieById(ctx, id)
 	if err != nil {
-		//TODO CAche err
 		return nil, err
 	}
 	return movie.ConvertMovieToMovieResponse(), nil

@@ -2,9 +2,8 @@ package user
 
 import (
 	"context"
+	"errors"
 	"time"
-
-	"github.com/dqkcode/movie-database/internal/app/types"
 
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
@@ -37,8 +36,6 @@ func (m *MongoDBRepository) Create(ctx context.Context, user User) (string, erro
 func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
 	s := m.session.Clone()
 	defer s.Close()
-	u := ctx.Value("user").(*types.UserInfo)
-
 	c := m.getCollection(s)
 	obj := bson.M{
 		"updated_at": time.Now(),
@@ -62,11 +59,14 @@ func (m *MongoDBRepository) Update(ctx context.Context, user User) error {
 		obj["gender"] = 3
 	}
 
-	err := c.UpdateId(u.ID, bson.M{
+	err := c.UpdateId(user.ID, bson.M{
 		"$set": obj,
 	})
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrUserNotFound
+	}
 	if err != nil {
-		return ErrUpdateUserFailed
+		return err
 	}
 
 	return nil
@@ -87,13 +87,12 @@ func (m *MongoDBRepository) FindUserByEmail(ctx context.Context, email string) (
 func (m *MongoDBRepository) FindUserById(ctx context.Context, id string) (*User, error) {
 	s := m.session.Clone()
 	defer s.Close()
-
 	user := &User{}
 	err := m.getCollection(s).FindId(id).One(user)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return nil, ErrUserNotFound
+	}
 	if err != nil {
-		if err == mgo.ErrNotFound {
-			return nil, ErrUserNotFound
-		}
 		return nil, err
 	}
 	return user, nil
@@ -104,10 +103,11 @@ func (m *MongoDBRepository) GetAllUsers(ctx context.Context) ([]*User, error) {
 
 	users := []*User{}
 	err := m.getCollection(s).Find(nil).All(&users)
+
+	if len(users) == 0 {
+		return nil, ErrUserNotFound
+	}
 	if err != nil {
-		if err == mgo.ErrNotFound {
-			return nil, ErrUserNotFound
-		}
 		return nil, err
 	}
 	return users, nil
@@ -116,7 +116,11 @@ func (m *MongoDBRepository) GetAllUsers(ctx context.Context) ([]*User, error) {
 func (m *MongoDBRepository) Delete(ctx context.Context, id string) error {
 	s := m.session.Clone()
 	defer s.Close()
-	if err := m.getCollection(s).RemoveId(id); err != nil {
+	err := m.getCollection(s).RemoveId(id)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrUserNotFound
+	}
+	if err != nil {
 		return err
 	}
 	return nil
@@ -128,14 +132,12 @@ func (m *MongoDBRepository) CheckEmailIsRegisted(ctx context.Context, email stri
 	selector := bson.M{
 		"email": email,
 	}
-
 	err := m.getCollection(s).Find(selector).One(&User{})
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrUserNotFound
+	}
 	if err != nil {
-		if err == mgo.ErrNotFound {
-			return ErrUserNotFound
-
-		}
-		return ErrDBQuery
+		return ErrDB
 	}
 	return ErrUserAlreadyExist
 }

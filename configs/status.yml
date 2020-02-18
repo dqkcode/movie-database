@@ -22,7 +22,7 @@ normal:
   permission_deny:
     status: 400
     code: 1005
-    message: "Permission deny"
+    message: "Permission denied"
 
 user:
   created:

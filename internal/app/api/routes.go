@@ -6,7 +6,6 @@ import (
 	"github.com/dqkcode/movie-database/internal/pkg/http/middleware"
 
 	"github.com/dqkcode/movie-database/internal/app/auth"
-	"github.com/dqkcode/movie-database/internal/app/user"
 	"github.com/dqkcode/movie-database/internal/pkg/db/mongodb"
 	rt "github.com/dqkcode/movie-database/internal/pkg/http/router"
 	"github.com/gorilla/mux"
@@ -16,14 +15,14 @@ func InitRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.Use(middleware.LoggingMiddleware)
 	session := mongodb.InitDBSession()
-	repo := user.NewMongoDBRepository(session)
 
+	//Policy
+	policyService := NewPolicyService()
 	//User
-	usersService := user.NewService(repo)
-	usersHandler := user.NewHandler(usersService)
+	userService, userHandler := NewUserServiceAndHandler(session, policyService)
 
 	//Auth
-	authSrv := NewAuthService(usersService)
+	authSrv := NewAuthService(userService)
 	authHandler := auth.NewHandler(authSrv)
 
 	//Movie
@@ -36,9 +35,10 @@ func InitRouter() *mux.Router {
 
 	//watchlist
 	watchlistHandler := NewWatchlistHandler(session)
+
 	//router
 	routes := make([]rt.Route, 0)
-	routes = append(routes, usersHandler.Routes()...)
+	routes = append(routes, userHandler.Routes()...)
 	routes = append(routes, authHandler.Routes()...)
 	routes = append(routes, moviesHandler.Routes()...)
 	routes = append(routes, crawlerHandler.Routes()...)

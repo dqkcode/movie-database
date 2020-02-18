@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrMovieNotFound     = errors.New("Movie not found")
-	ErrPermissionDeny    = errors.New("Permission deny")
-	ErrUpdateMovieFailed = errors.New("Update movie failed")
+	ErrMovieNotFound     = errors.New("movie not found")
+	ErrPermissionDeny    = errors.New("permission deny")
+	ErrUpdateMovieFailed = errors.New("update movie failed")
 )

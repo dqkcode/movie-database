@@ -43,7 +43,6 @@ func (r *MongoDBRepository) CreateWatchlist(ctx context.Context, usrID, name str
 func (r *MongoDBRepository) AddMovieToWatchlist(movieID, watchlistID string) error {
 	s := r.session.Clone()
 	defer s.Close()
-
 	doc := bson.M{
 		"watchlist_id": watchlistID,
 		"movie_id":     movieID,
@@ -79,11 +78,8 @@ func (r *MongoDBRepository) DeleteWatchlist(watchlistID string) error {
 		"watchlist_id": watchlistID,
 	}
 	_, err := r.getCollection("watchlist_movie", s).RemoveAll(doc)
-	if errors.Is(err, mgo.ErrNotFound) {
-		return ErrWatchlistNotFound
-	}
-	if err != nil {
-		return err
+	if !errors.Is(err, mgo.ErrNotFound) {
+		return ErrDB
 	}
 
 	err = r.getCollection("watchlist", s).RemoveId(watchlistID)
@@ -114,7 +110,11 @@ func (r *MongoDBRepository) GetAllWatchlistByUserId(id string) ([]*Watchlist, er
 	s := r.session.Clone()
 	defer s.Close()
 	list := []*Watchlist{}
-	if err := r.getCollection("watchlist", s).Find(bson.M{"user_id": id}).All(&list); err != nil {
+	err := r.getCollection("watchlist", s).Find(bson.M{"user_id": id}).All(&list)
+	if len(list) == 0 {
+		return nil, ErrWatchlistNotFound
+	}
+	if err != nil {
 		return nil, err
 	}
 	return list, nil
@@ -124,8 +124,12 @@ func (r *MongoDBRepository) ListAllMovies(id string) ([]*WatchlistMovie, error) 
 	s := r.session.Clone()
 	defer s.Close()
 	list := []*WatchlistMovie{}
-	if err := r.getCollection("watchlist_movie", s).Find(bson.M{"watchlist_id": id}).All(&list); err != nil {
+	err := r.getCollection("watchlist_movie", s).Find(bson.M{"watchlist_id": id}).All(&list)
+	if err != nil {
 		return nil, err
+	}
+	if len(list) == 0 {
+		return nil, ErrMovieNotFound
 	}
 	return list, nil
 }
@@ -136,7 +140,13 @@ func (r *MongoDBRepository) UpdateStatusWatchList(ctx context.Context, watchlist
 	obj := bson.M{
 		"$set": bson.M{"share": status},
 	}
-	r.getCollection("watchlist", s).UpdateId(watchlistID, obj)
+	err := r.getCollection("watchlist", s).UpdateId(watchlistID, obj)
+	if errors.Is(err, mgo.ErrNotFound) {
+		return ErrWatchlistNotFound
+	}
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
