@@ -9,6 +9,9 @@ require (
 	github.com/antchfx/xpath v1.1.4 // indirect
 	github.com/casbin/casbin v1.9.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/elastic/go-elasticsearch v0.0.0
+	github.com/elastic/go-elasticsearch/v7 v7.6.0
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20200210103600-aff00e5adfde
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-playground/validator/v10 v10.1.0
 	github.com/gobwas/glob v0.2.3 // indirect

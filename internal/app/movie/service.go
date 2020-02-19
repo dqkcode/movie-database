@@ -20,15 +20,20 @@ type (
 		GetMovieById(ctx context.Context, id string) (*Movie, error)
 		Update(ctx context.Context, movie *Movie) error
 	}
+	searchEngine interface {
+		InsertMovies(movie *Movie) error
+	}
 
 	Service struct {
-		repository
+		repository   repository
+		searchEngine searchEngine
 	}
 )
 
-func NewService(repo repository) *Service {
+func NewService(repo repository, s searchEngine) *Service {
 	return &Service{
-		repository: repo,
+		repository:   repo,
+		searchEngine: s,
 	}
 }
 

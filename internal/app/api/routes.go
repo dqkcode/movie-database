@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/dqkcode/movie-database/internal/pkg/elasticsearch"
+
 	"github.com/dqkcode/movie-database/internal/pkg/http/middleware"
 
 	"github.com/dqkcode/movie-database/internal/app/auth"
@@ -15,7 +17,8 @@ func InitRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.Use(middleware.LoggingMiddleware)
 	session := mongodb.InitDBSession()
-
+	// Elasticsearch
+	es := elasticsearch.NewClient()
 	//Policy
 	policyService := NewPolicyService()
 	//User
@@ -26,8 +29,7 @@ func InitRouter() *mux.Router {
 	authHandler := auth.NewHandler(authSrv)
 
 	//Movie
-	movieService := NewMovieService(session)
-	moviesHandler := NewMovieHander(movieService)
+	movieService, movieHandler := NewMovieServiceAndHander(session, es)
 
 	// Crawler
 	crawlerSrv := NewCrawlerService(movieService)
@@ -40,7 +42,7 @@ func InitRouter() *mux.Router {
 	routes := make([]rt.Route, 0)
 	routes = append(routes, userHandler.Routes()...)
 	routes = append(routes, authHandler.Routes()...)
-	routes = append(routes, moviesHandler.Routes()...)
+	routes = append(routes, movieHandler.Routes()...)
 	routes = append(routes, crawlerHandler.Routes()...)
 	routes = append(routes, watchlistHandler.Routes()...)
 

@@ -1,7 +1,7 @@
 version: '3'
-
 services:
   mongodb:
+    container_name: mongodb
     image: mongo:latest
     hostname: mongodb
     ports:
@@ -10,6 +10,7 @@ services:
       - /opt/data/mongo_dev:/data/db
     restart: always
   movie:
+    container_name: movie
     image: "movie"
     hostname: movie
     ports:
@@ -20,3 +21,17 @@ services:
     environment: 
       - MONGODB_ADDRS=mongodb:27017
       - STATUS_FILE_PATH=/home/configs/status.yml
+  elasticsearch:
+    image: elasticsearch:7.6.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - /home/elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+  kibana:
+    container_name: kibana
+    image: kibana:7.6.0
+    ports: 
+      - 5601:5601
