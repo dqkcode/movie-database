@@ -18,7 +18,7 @@ type (
 		DeleteMovieInWatchlist(ctx context.Context, movieID, watchlistID string) error
 		DeleteWatchlist(ctx context.Context, watchlistID string) error
 		GetWatchlistById(ctx context.Context, watchlistID string) (*WatchlistResponse, error)
-		GetAllWatchlistByUserId(ctx context.Context) ([]*WatchlistResponse, error)
+		GetAllWatchlistByUserId(ctx context.Context, userID string) ([]*WatchlistResponse, error)
 		ListAllMovies(ctx context.Context, watchlistID string) ([]string, error)
 		UpdateStatusWatchList(ctx context.Context, watchlistID string, status bool) (string, error)
 	}
@@ -34,7 +34,6 @@ func NewHandler(srv service) *Handler {
 }
 
 func (h *Handler) CreateWatchlist(w http.ResponseWriter, r *http.Request) {
-
 	req := struct {
 		Name string `json:"name"`
 	}{}
@@ -84,7 +83,6 @@ func (h *Handler) GetWatchlistById(w http.ResponseWriter, r *http.Request) {
 	if errors.Is(err, ErrPermissionDeny) {
 		types.ResponseJson(w, "", types.Normal().PermissionDeny)
 		return
-
 	}
 	types.ResponseJson(w, watchlist, types.Normal().Success)
 }
@@ -111,9 +109,7 @@ func (h *Handler) DeleteMovieInWatchlist(w http.ResponseWriter, r *http.Request)
 
 func (h *Handler) DeleteWatchlist(w http.ResponseWriter, r *http.Request) {
 	watchlistID := mux.Vars(r)["id"]
-
 	err := h.srv.DeleteWatchlist(r.Context(), watchlistID)
-
 	if errors.Is(err, ErrWatchlistNotFound) {
 		types.ResponseJson(w, "", types.Normal().NotFound)
 		return
@@ -130,13 +126,12 @@ func (h *Handler) DeleteWatchlist(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetAllMoviesInWatchlist(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-
 	movieIDs, err := h.srv.ListAllMovies(r.Context(), id)
 	if errors.Is(err, ErrPermissionDeny) {
 		types.ResponseJson(w, "", types.Normal().PermissionDeny)
 		return
 	}
-	if len(movieIDs) == 0 {
+	if errors.Is(err, ErrMovieNotFound) {
 		types.ResponseJson(w, "", types.Normal().NotFound)
 		return
 	}
@@ -148,17 +143,21 @@ func (h *Handler) GetAllMoviesInWatchlist(w http.ResponseWriter, r *http.Request
 }
 
 func (h *Handler) GetAllWatchlistByUserId(w http.ResponseWriter, r *http.Request) {
-	watchlists, err := h.srv.GetAllWatchlistByUserId(r.Context())
+	userID := mux.Vars(r)["ownID"]
+	watchlists, err := h.srv.GetAllWatchlistByUserId(r.Context(), userID)
+	if errors.Is(err, ErrPermissionDeny) {
+		types.ResponseJson(w, "", types.Normal().PermissionDeny)
+		return
+	}
+	if errors.Is(err, ErrMovieNotFound) {
+		types.ResponseJson(w, "", types.Normal().NotFound)
+		return
+	}
 	if err != nil {
 		types.ResponseJson(w, "", types.Normal().Internal)
 		return
 	}
-	if len(watchlists) == 0 {
-		types.ResponseJson(w, "", types.Normal().NotFound)
-		return
-	}
 	types.ResponseJson(w, watchlists, types.Normal().Success)
-
 }
 
 func (h *Handler) UpdateStatusWatchList(w http.ResponseWriter, r *http.Request) {
@@ -168,16 +167,16 @@ func (h *Handler) UpdateStatusWatchList(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	watchlists, err := h.srv.UpdateStatusWatchList(r.Context(), watchlistID, status)
+	if errors.Is(err, ErrWatchlistNotFound) {
+		types.ResponseJson(w, "", types.Normal().NotFound)
+		return
+	}
 	if errors.Is(err, ErrPermissionDeny) {
 		types.ResponseJson(w, "", types.Normal().PermissionDeny)
 		return
 	}
 	if err != nil {
 		types.ResponseJson(w, "", types.Normal().Internal)
-		return
-	}
-	if watchlists == "" {
-		types.ResponseJson(w, watchlists, types.Normal().NotFound)
 		return
 	}
 	types.ResponseJson(w, watchlists, types.Normal().Success)

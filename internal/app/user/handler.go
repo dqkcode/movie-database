@@ -14,7 +14,7 @@ import (
 type (
 	service interface {
 		Register(ctx context.Context, req RegisterRequest) (string, error)
-		Update(ctx context.Context, req UpdateInfoRequest) error
+		Update(ctx context.Context, id string, req UpdateInfoRequest) error
 		FindUserById(ctx context.Context, id string) (*types.UserInfo, error)
 		DeleteUser(ctx context.Context, id string) error
 		GetAllUsers(ctx context.Context) ([]*types.UserInfo, error)
@@ -38,17 +38,12 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := h.srv.Register(r.Context(), req)
-
-	if err == ErrDBQuery {
-		types.ResponseJson(w, "", types.Normal().Internal)
-		return
-	}
-	if err == ErrUserAlreadyExist {
+	if errors.Is(err, ErrUserAlreadyExist) {
 		types.ResponseJson(w, "", types.User().DuplicateEmail)
 		return
 	}
-	if err == ErrCreateUserFailed {
-		types.ResponseJson(w, "", types.User().CreateFailed)
+	if err != nil {
+		types.ResponseJson(w, "", types.Normal().Internal)
 		return
 	}
 	data := map[string]string{
@@ -58,22 +53,32 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		types.ResponseJson(w, "", types.Normal().BadRequest)
+		return
+	}
 	var req UpdateInfoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	err := h.srv.Update(r.Context(), req)
+	err := h.srv.Update(r.Context(), id, req)
+	if errors.Is(err, ErrPermissionDeny) {
+		types.ResponseJson(w, "", types.Normal().PermissionDeny)
+		return
+	}
+	if errors.Is(err, ErrUserNotFound) {
+		types.ResponseJson(w, "", types.Normal().NotFound)
+		return
+	}
 	if err != nil {
 		types.ResponseJson(w, "", types.User().UpdateFailed)
 		return
 	}
-
 	data := map[string]string{
-		"id": r.Context().Value("user").(*types.UserInfo).ID,
+		"id": id,
 	}
-
 	types.ResponseJson(w, data, types.Normal().Success)
 }
 
@@ -89,11 +94,14 @@ func (h *Handler) FindUserById(w http.ResponseWriter, r *http.Request) {
 		types.ResponseJson(w, "", types.Normal().PermissionDeny)
 		return
 	}
-	if err != nil {
-		types.ResponseJson(w, "", types.User().UserNotFound)
+	if errors.Is(err, ErrUserNotFound) {
+		types.ResponseJson(w, "", types.Normal().NotFound)
 		return
 	}
-
+	if err != nil {
+		types.ResponseJson(w, "", types.Normal().Internal)
+		return
+	}
 	types.ResponseJson(w, user, types.Normal().Success)
 }
 
@@ -103,32 +111,35 @@ func (h *Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		types.ResponseJson(w, "", types.Normal().BadRequest)
 		return
 	}
-
 	err := h.srv.DeleteUser(r.Context(), id)
-	if err != nil {
-		if err == ErrPermissionDeny {
-			types.ResponseJson(w, "", types.Normal().PermissionDeny)
-			return
-		}
-		types.ResponseJson(w, "", types.User().DeleteFailed)
+	if errors.Is(err, ErrPermissionDeny) {
+		types.ResponseJson(w, "", types.Normal().PermissionDeny)
 		return
 	}
-
+	if errors.Is(err, ErrUserNotFound) {
+		types.ResponseJson(w, "", types.Normal().NotFound)
+		return
+	}
+	if err != nil {
+		types.ResponseJson(w, "", types.Normal().Internal)
+		return
+	}
 	types.ResponseJson(w, "", types.Normal().Success)
 }
 
 func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-
 	users, err := h.srv.GetAllUsers(r.Context())
-	if err != nil {
-		if err == ErrPermissionDeny {
-			types.ResponseJson(w, "", types.Normal().PermissionDeny)
-			return
-		}
+	if errors.Is(err, ErrPermissionDeny) {
+		types.ResponseJson(w, "", types.Normal().PermissionDeny)
+		return
+	}
+	if errors.Is(err, ErrUserNotFound) {
 		types.ResponseJson(w, "", types.Normal().NotFound)
 		return
-
 	}
-
+	if err != nil {
+		types.ResponseJson(w, "", types.Normal().Internal)
+		return
+	}
 	types.ResponseJson(w, users, types.Normal().Success)
 }

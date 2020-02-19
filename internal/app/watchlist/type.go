@@ -32,6 +32,7 @@ type (
 var (
 	ErrWatchlistNotFound = errors.New("error watchlist not found")
 	ErrPermissionDeny    = errors.New("error permission deny")
+	ErrMovieNotFound     = errors.New("error movie not found")
 	ErrDB                = errors.New("error DB")
 )
 

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/dqkcode/movie-database/internal/app/types"
@@ -24,15 +25,17 @@ func NewHandler(srv service) *Handler {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	token, err := h.srv.Login(r.Context(), req)
+	if errors.Is(err, ErrUserIsLocked) {
+		types.ResponseJson(w, "", types.Auth().UserLocked)
+		return
+	}
 	if err != nil {
-
 		types.ResponseJson(w, "", types.Auth().PasswordWrong)
 		return
 	}

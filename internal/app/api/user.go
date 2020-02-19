@@ -1,17 +1,18 @@
 package api
 
 import (
+	"github.com/dqkcode/movie-database/internal/app/policy"
 	"github.com/dqkcode/movie-database/internal/app/user"
 	"github.com/globalsign/mgo"
 )
 
-func NewUserService(repo *user.MongoDBRepository) *user.Service {
+func NewUserService(repo *user.MongoDBRepository, policyService *policy.Service) *user.Service {
 
-	return user.NewService(repo)
+	return user.NewService(repo, policyService)
 }
 
-func NewUserHandler(session *mgo.Session) *user.Handler {
+func NewUserServiceAndHandler(session *mgo.Session, policyService *policy.Service) (*user.Service, *user.Handler) {
 	repo := user.NewMongoDBRepository(session)
-	usersService := user.NewService(repo)
-	return user.NewHandler(usersService)
+	usersService := user.NewService(repo, policyService)
+	return usersService, user.NewHandler(usersService)
 }
