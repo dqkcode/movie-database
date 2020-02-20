@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	s := crawler.NewServiceCLI(api.NewMovieServiceWithMongoRepo())
+	s := crawler.NewServiceCLI(api.NewMovieService())
 
 	s.CrawlAllMovies()
 }

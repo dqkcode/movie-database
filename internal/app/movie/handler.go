@@ -19,6 +19,7 @@ type (
 		GetAllMovies(ctx context.Context, req FindRequest) ([]*types.MovieInfo, error)
 		GetMovieById(ctx context.Context, id string) (*types.MovieInfo, error)
 		Update(ctx context.Context, id string, movie UpdateRequest) error
+		SearchMovieByName(ctx context.Context, movieName string) ([]types.MovieInfo, error)
 	}
 	Handler struct {
 		srv service
@@ -146,4 +147,22 @@ func (h *Handler) GetMovieById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	types.ResponseJson(w, movie, types.Normal().Success)
+}
+
+func (h *Handler) SearchMovieByName(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	if name == "" {
+		types.ResponseJson(w, "", types.Normal().BadRequest)
+		return
+	}
+	movies, err := h.srv.SearchMovieByName(r.Context(), name)
+	if errors.Is(err, ErrMovieNotFound) {
+		types.ResponseJson(w, "", types.Movie().NotFound)
+		return
+	}
+	if err != nil {
+		types.ResponseJson(w, "", types.Normal().Internal)
+		return
+	}
+	types.ResponseJson(w, movies, types.Normal().Success)
 }

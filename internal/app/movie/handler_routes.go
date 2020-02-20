@@ -27,6 +27,13 @@ func (h *Handler) Routes() []router.Route {
 			Path:    version1 + "/movies",
 		},
 		{
+			//Search
+			Handler: h.SearchMovieByName,
+			Method:  http.MethodGet,
+			Path:    version1 + "/movies",
+			Queries: []string{"name", "{name:.*}"},
+		},
+		{
 			// Get By ID
 			Handler: h.GetMovieById,
 			Method:  http.MethodGet,

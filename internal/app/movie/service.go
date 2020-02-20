@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/dqkcode/movie-database/internal/app/types"
 
 	"github.com/google/uuid"
@@ -21,7 +23,8 @@ type (
 		Update(ctx context.Context, movie *Movie) error
 	}
 	searchEngine interface {
-		InsertMovies(movie *Movie) error
+		InsertMovies(ctx context.Context, movie *types.MovieInfo) error
+		SearchMovieByName(ctx context.Context, movieName string) ([]types.MovieInfo, error)
 	}
 
 	Service struct {
@@ -57,6 +60,9 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("failed to create movie, err: %w", err)
 	}
+	if err := s.searchEngine.InsertMovies(ctx, movie.ConvertMovieToMovieResponse()); err != nil {
+		logrus.Errorf("failed to insert movie to es, err: %w", err)
+	}
 	return id, nil
 }
 
@@ -83,6 +89,9 @@ func (s *Service) CreateMovie(m types.MovieInfo) error {
 	_, err := s.repository.Create(newCtx, movie)
 	if err != nil {
 		return fmt.Errorf("failed to create movie, err: %w", err)
+	}
+	if err := s.searchEngine.InsertMovies(newCtx, movie.ConvertMovieToMovieResponse()); err != nil {
+		logrus.Errorf("failed to insert movie to es, err: %w", err)
 	}
 	return nil
 }
@@ -174,4 +183,12 @@ func (s *Service) GetMovieById(ctx context.Context, id string) (*types.MovieInfo
 		return nil, err
 	}
 	return movie.ConvertMovieToMovieResponse(), nil
+}
+
+func (s *Service) SearchMovieByName(ctx context.Context, name string) ([]types.MovieInfo, error) {
+	movies, err := s.searchEngine.SearchMovieByName(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return movies, nil
 }

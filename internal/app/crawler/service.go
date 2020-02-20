@@ -97,7 +97,6 @@ func (s *Service) CrawlMovieInfo(link string) {
 		name := n[:len(n)-8]
 		releaseTime := strings.TrimSpace(e.DOM.Find(`a[title="See more release dates"]`).Text())
 		mv, err := s.GetMovieByName(name)
-		fmt.Printf("mv.Name :%v, name:%v, == %v \n", mv.Name, name, mv.Name == name)
 		if errors.Is(err, types.ErrMovieNotFound) || mv.ReleaseTime != releaseTime {
 
 			fmt.Printf("\tCrawling movie ❚❚: %s\n", name)
